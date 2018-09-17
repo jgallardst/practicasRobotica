@@ -1,8 +1,8 @@
 #ifndef ejemplo1_H
 #define ejemplo1_H
-#include <thread>
 #include <unistd.h>
 #include "ui_counterDlg.h"
+#include "Timer.h"
 
 class ejemplo1 : public QWidget, public Ui_Counter
 {
@@ -11,21 +11,15 @@ Q_OBJECT
 public:
     ejemplo1();
 	~ejemplo1();
-	bool running;
 	int num;
-	int period;
+	Timer* t;
 	void updateNumber();
-	void setPeriod(int p);
- 	void start(int p);
-	void stop();
-	std::thread timer;
 	void run(){
-        while(running){
-            std::this_thread::sleep_for( std::chrono::milliseconds(period) );
-			if(running)updateNumber();
+        while(t->isRunning()){
+            std::this_thread::sleep_for( std::chrono::milliseconds(t->getPeriod()) );
+			if(t->isRunning()) this->updateNumber();
         }
     }
-
     
 public slots:
 	void doButton();

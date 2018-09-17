@@ -12,12 +12,14 @@ SET ( SOURCES
   ${SOURCES}
   ejemplo1.cpp
   main.cpp
+  Timer.cpp
  )
 
 # Headers set
 SET ( HEADERS
   ${HEADERS}
   ejemplo1.h
+  Timer.h
 )
 
 FIND_PACKAGE( Qt4 REQUIRED )

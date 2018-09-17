@@ -9,13 +9,14 @@ ejemplo1::ejemplo1(): Ui_Counter()
     lcdNumber->display(num);
     show();
 	connect(button, SIGNAL(clicked()), this, SLOT(doButton()) );
-	start(1000);
+	t = new Timer();
+	t->start(1000, new std::thread(&ejemplo1::run, this));
 }
 
 void ejemplo1::doButton()
 {
-	if(running) stop();
-	else start(1000);
+	if(t->isRunning()) t->stop();
+	else t->start(1000, new std::thread(&ejemplo1::run, this));
 }
 
 void ejemplo1::updateNumber()
@@ -24,27 +25,8 @@ void ejemplo1::updateNumber()
 	lcdNumber->display(num);
 }
 
-void ejemplo1::setPeriod(int p)
-{
-	this->period = p;
-}
-
-void ejemplo1::stop()
-{
-	running = false;
-	if(timer.joinable()) timer.join();
-}
-
-void ejemplo1::start(int p)
-{
-	running = true;
-	period = p;
-	timer = std::thread(&ejemplo1::run,this);
-}
 
 ejemplo1::~ejemplo1()
 {
-	if(running) this->stop();
+	delete t;
 }
-
-
