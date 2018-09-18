@@ -10,8 +10,7 @@ ejemplo1::ejemplo1(): Ui_Counter()
     show();
 	connect(button, SIGNAL(clicked()), this, SLOT(doButton()) );
 	t = new Timer();
-	void* fn = &ejemplo1::updateNumber;
-	this->connect(fn, (void*) this);
+	t->connect(bind(&ejemplo1::updateNumber, this));
 	t->start(1000);
 }
 
@@ -30,5 +29,4 @@ void ejemplo1::updateNumber()
 
 ejemplo1::~ejemplo1()
 {
-	delete t;
 }
