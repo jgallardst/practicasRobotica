@@ -15,7 +15,7 @@ public:
 	std::thread timer;
 	std::function<void()> func;
 	bool isRunning();
-	void connect(std::function<void()> callback);
+	void connect(void*, void*);
 	void start(int p);
 	void stop();
 	void setPeriod(int p);

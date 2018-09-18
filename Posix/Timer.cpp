@@ -31,9 +31,9 @@ void Timer::start(int p)
 	
 }
 
-void Timer::connect(std::function<void()> callback)
+void Timer::connect(void* fn, void* cl)
 {
-	func = callback;
+	auto func = std::bind(fn, cl);
 }
 
 
