@@ -10,13 +10,14 @@ ejemplo1::ejemplo1(): Ui_Counter()
     show();
 	connect(button, SIGNAL(clicked()), this, SLOT(doButton()) );
 	t = new Timer();
-	t->start(1000, new std::thread(&ejemplo1::run, this));
+	t->connect(bind(&ejemplo1::updateNumber, this));
+	t->start(1000);
 }
 
 void ejemplo1::doButton()
 {
 	if(t->isRunning()) t->stop();
-	else t->start(1000, new std::thread(&ejemplo1::run, this));
+	else t->start(1000);
 }
 
 void ejemplo1::updateNumber()
@@ -28,5 +29,4 @@ void ejemplo1::updateNumber()
 
 ejemplo1::~ejemplo1()
 {
-	delete t;
 }

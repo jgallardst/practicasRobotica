@@ -8,7 +8,7 @@ Timer::Timer()
 Timer::~Timer()
 {
 	running = false;
-	if(isRunning()) this->stop();
+	if(running) this->stop();
 }
 
 
@@ -17,26 +17,26 @@ void Timer::setPeriod(int p)
 	this->period = p;
 }
 
-int Timer::getPeriod()
-{
-	return period;
-}
-
-
 void Timer::stop()
 {
 	running = false;
-	if(timer->joinable()) timer->join();
-	delete timer;
+	if(timer.joinable()) timer.join();
 }
 
-void Timer::start(int p, std::thread* t)
+void Timer::start(int p)
 {
 	running = true;
 	period = p;
-	timer = t;
+	timer = std::thread(&Timer::run, this);
 	
 }
+
+void Timer::connect(std::function<void()> callback)
+{
+	func = callback;
+}
+
+
 
 bool Timer::isRunning()
 {

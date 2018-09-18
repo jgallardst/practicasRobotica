@@ -14,13 +14,7 @@ public:
 	int num;
 	Timer* t;
 	void updateNumber();
-	void run(){
-        while(t->isRunning()){
-            std::this_thread::sleep_for( std::chrono::milliseconds(t->getPeriod()) );
-			if(t->isRunning()) this->updateNumber();
-        }
-    }
-    
+
 public slots:
 	void doButton();
 };
