@@ -7,8 +7,7 @@ Timer::Timer()
 
 Timer::~Timer()
 {
-	running = false;
-	if(running) this->stop();
+	
 }
 
 
