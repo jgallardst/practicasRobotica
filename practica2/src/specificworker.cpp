@@ -53,9 +53,9 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
-static int calculaVelocidad(int speed, float dist){
-	float brake = (dist/470) - (23/(float)25);
-	return speed *= brake;
+static int calculaVelocidad(float angle){
+	if(angle < 0) angle *= -1;
+	return (0 + angle * 120);
 }
 
 static int calculaAngulo(float angle){
@@ -66,7 +66,7 @@ static int calculaAngulo(float angle){
 
 static RoboCompLaser::TLaserData orderedTrimmedData(RoboCompLaser::TLaserData ldata){
 	RoboCompLaser::TLaserData ldataTrimmed;
-        for(int i = 10; i <= 90; i++){
+        for(int i = 12; i <= 88; i++){
  		ldataTrimmed.push_back(ldata.at(i));
 	}
 	return ldataTrimmed;
@@ -74,7 +74,7 @@ static RoboCompLaser::TLaserData orderedTrimmedData(RoboCompLaser::TLaserData ld
 
 void SpecificWorker::compute( )
 {
-    const float threshold = 500; //millimeters
+    const float threshold = 230; //millimeters
     float rot = 1.25;  //rads per second
     int izq = 1;
     try
@@ -88,13 +88,18 @@ void SpecificWorker::compute( )
         std::sort( ldataTrimmed.begin(), ldataTrimmed.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
 	if( ldataTrimmed.front().dist < threshold)
 	{
-		izq = calculaAngulo(ldataTrimmed.front().angle);
- 		differentialrobot_proxy->setSpeedBase(calculaVelocidad(ldataTrimmed.front().dist, speed), izq * rot);
+		speed = 250;
+		if(!chooseSide) {
+			izq = calculaAngulo(ldataTrimmed.front().angle);
+			chooseSide = true;
+		}
+ 		differentialrobot_proxy->setSpeedBase(calculaVelocidad(ldataTrimmed.front().angle), izq * rot);
 		usleep(rand()%(400000) +  600000);  // random wait between 1.5s and 0.1sec
 	}
 	else
 	{
-		if(speed < 1000) speed = speed + 50;
+		chooseSide = false;
+		if(speed < 900) speed = speed + 50;
 		differentialrobot_proxy->setSpeedBase(speed, 0);
 		usleep(2000000 / speed);
   	}
