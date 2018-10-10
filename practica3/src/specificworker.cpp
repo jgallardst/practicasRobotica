@@ -36,15 +36,13 @@ SpecificWorker::~SpecificWorker()
 
 bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
-//       THE FOLLOWING IS JUST AN EXAMPLE
-//
-//	try
-//	{
-//		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
-//		innermodel_path = par.value;
-//		innermodel = new InnerModel(innermodel_path);
-//	}
-//	catch(std::exception e) { qFatal("Error reading config params"); }
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
+		innermodel_path = par.value;
+		innermodel = new InnerModel(innermodel_path);
+	}
+	catch(std::exception e) { qFatal("Error reading config params"); }
 
 
 
@@ -52,17 +50,6 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	timer.start(Period);
 	return true;
 }
-
-static int calculaVelocidad(float angle){
-	if(angle < 0) angle *= -1;
-	return (0 + angle * 120);
-}
-
-static int calculaAngulo(float angle){
-	if(angle < 0) return 1;
-	else return -1;
-}
-
 
 static RoboCompLaser::TLaserData orderedTrimmedData(RoboCompLaser::TLaserData ldata){
 	RoboCompLaser::TLaserData ldataTrimmed;
@@ -74,33 +61,17 @@ static RoboCompLaser::TLaserData orderedTrimmedData(RoboCompLaser::TLaserData ld
 
 void SpecificWorker::compute( )
 {
-    const float threshold = 240; //millimeters
-    float rot = 2;  //rads per second
-    int izq = 1;
     try
-    {
-	if(!triggerSet){
-		finish = std::thread(&SpecificWorker::stop, this);
-		triggerSet = true;
-	}
-		
+    {		
 	RoboCompLaser::TLaserData ldataTrimmed = orderedTrimmedData(laser_proxy->getLaserData());
         std::sort( ldataTrimmed.begin(), ldataTrimmed.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
 	if( ldataTrimmed.front().dist < threshold)
 	{
-		speed = 300;
-		if(!chooseSide) {
-			izq = calculaAngulo(ldataTrimmed.front().angle);
-			chooseSide = true;
-		}
- 		differentialrobot_proxy->setSpeedBase(calculaVelocidad(ldataTrimmed.front().angle), izq * rot);
 		usleep(rand()%(350000) +  300000);  // random wait between 1.5s and 0.1sec
 	}
 	else
 	{
 		chooseSide = false;
-		if(speed < 1000) speed = speed + 50;
-		differentialrobot_proxy->setSpeedBase(speed, 0);
 		usleep(2000000 / speed);
   	}
     }
@@ -109,5 +80,12 @@ void SpecificWorker::compute( )
         std::cout << ex << std::endl;
     }
 }
+
+void SpecificWorker::setPick(const Pick &myPick)
+{
+  qDebug() << "PRESSED ON: X: " << myPick.x << " Z: " << myPick.z;
+  t.set(myPick.x, myPick.z);
+}
+
 
 
