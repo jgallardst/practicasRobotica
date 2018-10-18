@@ -37,24 +37,27 @@ struct target_t {
 
 class Target {
    public:
-    target_t get() const {
-        std::lock_guard<std::mutex> l(m);
-        noPick = true;
-        return pos;
-    }
+
     void set(int x, int z) {
         std::lock_guard<std::mutex> l(m);
-        noPick = false;
+        activo = true;
         pos.x = x; pos.z = z;
     }
-    bool empty() const {
+    void setInactive(){
         std::lock_guard<std::mutex> l(m);
-     	return(noPick);
+        activo = false;
+    }
+    std::tuple<bool, target_t> activoAndGet() {
+        std::lock_guard<std::mutex> l(m);
+     	if(activo){
+            return std::make_tuple(true, pos);
+        } 
+        else return std::make_tuple(false, pos);
     }
   private:
     mutable std::mutex m;
     target_t pos; 
-    bool noPick = true;
+    bool activo = false;
  
 };
 

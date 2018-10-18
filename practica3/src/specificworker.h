@@ -29,6 +29,7 @@
 
 #include <chrono>
 #include <genericworker.h>
+#include <random>
 #include <innermodel/innermodel.h>
 #include <stdlib.h> 
 #include <Target.h>
@@ -53,9 +54,10 @@ public slots:
 	void compute();
 
 private:
-	InnerModel *innerModel;
+	std::shared_ptr<InnerModel> innerModel;
 	int speed = 250;
 	bool chooseSide = false;
+	bool aligned = false;
 	std::thread finish;
 	bool triggerSet = false;
 	Target t;

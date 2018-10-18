@@ -38,42 +38,66 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
 	try
 	{
+	
 		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
-		innermodel_path = par.value;
-		innermodel = new InnerModel(innermodel_path);
+		innerModel = std::make_shared<InnerModel>(par.value);
 	}
+
 	catch(std::exception e) { qFatal("Error reading config params"); }
-
-
 
 
 	timer.start(Period);
 	return true;
 }
 
-static RoboCompLaser::TLaserData orderedTrimmedData(RoboCompLaser::TLaserData ldata){
-	RoboCompLaser::TLaserData ldataTrimmed;
-        for(int i = 12; i <= 88; i++){
- 		ldataTrimmed.push_back(ldata.at(i));
-	}
-	return ldataTrimmed;
+// Gaussian distribution
+static float F2(float x){
+	static const float inv_sqrt_2pi = 0.3989422804014327;
+    float a = (x - 0) / 0.2;
+
+    return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
+}
+
+static float F1(float norm){
+	if(norm > 200) return 1;
+	if(norm == 0) return 0;
+	else return (norm/200.0);
 }
 
 void SpecificWorker::compute( )
-{
+{		
     try
     {		
-	RoboCompLaser::TLaserData ldataTrimmed = orderedTrimmedData(laser_proxy->getLaserData());
-        std::sort( ldataTrimmed.begin(), ldataTrimmed.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
-	if( ldataTrimmed.front().dist < threshold)
-	{
-		usleep(rand()%(350000) +  300000);  // random wait between 1.5s and 0.1sec
-	}
-	else
-	{
-		chooseSide = false;
-		usleep(2000000 / speed);
-  	}
+		RoboCompGenericBase::TBaseState bState;
+		differentialrobot_proxy->getBaseState(bState);
+		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
+
+		target_t target;
+		if(std::get<0>(t.activoAndGet())){
+			target = std::get<1>(t.activoAndGet());
+		} else return;
+
+		
+
+		// RELATIVE FROM INNERMODEL: auto relative =  (innerModel->transform("base", QVec::vec3(target.x, 0, target.z), "world"));
+		// 2 Factores, pendiente y gaussiana segun el angulo
+		// RELATIVE USING ALGEBRA
+		Rot2D rot( bState.alpha);
+		auto sub = QVec::vec2(target.x - bState.x, target.z - bState.z);
+		auto relative = rot.invert() * (sub);
+
+		float angle = atan2(relative.x(), relative.y());
+		float mod = relative.norm2();
+
+		if(mod < 50)
+		{
+			if(std::get<0>(t.activoAndGet())) t.setInactive();
+			differentialrobot_proxy->setSpeedBase(0, 0); 
+			return;
+		} 
+		differentialrobot_proxy->setSpeedBase(1000 * F1(mod) * F2(angle), angle); 
+
+
     }
     catch(const Ice::Exception &ex)
     {
