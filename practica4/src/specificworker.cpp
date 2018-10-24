@@ -58,12 +58,12 @@ RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ld
 	return ldataTrimmed;
 }
 
-bool SpecificWorker::checkObstacle(TLaserData lData)
+bool SpecificWorker::checkObstacle()
 {
 	int distance = 300;
-	RoboCompLaser::TLaserData ldataTrimmed = trimLaser(laser_proxy->getLaserData());
-    std::sort( ldataTrimmed.begin(), ldataTrimmed.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
-    return ( lData.front().dist < distance );
+	RoboCompLaser::TLaserData ldata = trimLaser(laser_proxy->getLaserData());
+    std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
+    return ( ldata.front().dist < distance );
   
 }
 
@@ -106,8 +106,6 @@ void SpecificWorker::compute( )
     {		
 		RoboCompGenericBase::TBaseState bState;
 		differentialrobot_proxy->getBaseState(bState);
-
-	   	RoboCompLaser::TLaserData laserData = laser_proxy->getLaserData();
 
 		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
 

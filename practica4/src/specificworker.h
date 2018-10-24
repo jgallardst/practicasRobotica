@@ -43,7 +43,7 @@ public:
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 	void setPick(const Pick &myPick);
 	void goToTarget();
-	bool checkObstacle(TLaserData lData);
+	bool checkObstacle();
 	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata);
 
 
