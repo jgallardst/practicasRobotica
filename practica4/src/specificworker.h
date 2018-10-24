@@ -44,6 +44,8 @@ public:
 	void setPick(const Pick &myPick);
 	void goToTarget();
 	bool checkObstacle();
+	void bug();
+	bool targetAtSight();
 	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata);
 
 

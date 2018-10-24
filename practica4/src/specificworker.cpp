@@ -67,9 +67,19 @@ bool SpecificWorker::checkObstacle()
   
 }
 
+bool SpecificWorker::targetAtSight(){
+	QPolygonF poly;
+	for(auto l : laser_proxy->getLaserData()){
+		auto lr = innerModel->laserTo("world", "laser", l.dist, l.angle);
+	   	poly << QPointF(lr.x(), lr.z());
+	}
+	return poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
+}
+
 
 void SpecificWorker::goToTarget(){
 	if(checkObstacle()){
+		qDebug() << "GOTO -> BUG";
 		bs = botState::BUG;
 		return;
 	}
@@ -80,13 +90,13 @@ void SpecificWorker::goToTarget(){
 	float mod = relative.norm2();
 
 	if(mod < 100){
+		qDebug() << "GOTO -> IDLE";
 		bs = botState::IDLE;
 		differentialrobot_proxy->stopBase();
 		t.setInactive();
 		return;
 	}
 
-	qDebug() << "GOTO";
 
 	float speed = mod;
 
@@ -98,6 +108,12 @@ void SpecificWorker::goToTarget(){
  	}
   	catch ( const Ice::Exception &ex ) {  std::cout << ex << std::endl; }
 
+}
+
+void SpecificWorker::bug(){
+		bs = botState::IDLE;
+		differentialrobot_proxy->stopBase();
+		t.setInactive();
 }
 
 void SpecificWorker::compute( )
@@ -115,7 +131,6 @@ void SpecificWorker::compute( )
 	
 		switch(this->bs){
 			case botState::IDLE:
-				qDebug() << "IDLE";
 				if(std::get<0>(t.activoAndGet())){
 					bs = botState::GOTO;
 					qDebug() << "IDLE -> GOTO";
@@ -125,6 +140,7 @@ void SpecificWorker::compute( )
 				goToTarget();
 				break;
 			case botState::BUG:
+				bug();
 				break;
 		}
     }
