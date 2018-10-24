@@ -46,7 +46,8 @@ public:
 	bool checkObstacle();
 	void bug();
 	bool targetAtSight();
-	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata);
+	bool aligned();
+	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata, int i);
 
 
    
@@ -55,13 +56,13 @@ public slots:
 	void compute();
 
 private:
+	RoboCompGenericBase::TBaseState bState;
   	enum class botState {IDLE, GOTO, BUG};
 	botState bs = botState::IDLE;
 	target_t target;
 	std::shared_ptr<InnerModel> innerModel;
 	int speed = 250;
 	bool chooseSide = false;
-	bool aligned = false;
 	std::thread finish;
 	bool triggerSet = false;
 	Target t;

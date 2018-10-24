@@ -45,14 +45,13 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 	catch(std::exception e) { qFatal("Error reading config params"); }
 
-
 	timer.start(Period);
 	return true;
 }
 
-RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ldata){
+RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ldata, int cut){
 	RoboCompLaser::TLaserData ldataTrimmed;
-        for(int i = 30; i <= 70; i++){
+        for(int i = cut; i <= (100-cut); i++){
  		ldataTrimmed.push_back(ldata.at(i));
 	}
 	return ldataTrimmed;
@@ -61,19 +60,10 @@ RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ld
 bool SpecificWorker::checkObstacle()
 {
 	int distance = 300;
-	RoboCompLaser::TLaserData ldata = trimLaser(laser_proxy->getLaserData());
+	RoboCompLaser::TLaserData ldata = trimLaser(laser_proxy->getLaserData(), 30);
     std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
     return ( ldata.front().dist < distance );
   
-}
-
-bool SpecificWorker::targetAtSight(){
-	QPolygonF poly;
-	for(auto l : laser_proxy->getLaserData()){
-		auto lr = innerModel->laserTo("world", "laser", l.dist, l.angle);
-	   	poly << QPointF(lr.x(), lr.z());
-	}
-	return poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
 }
 
 
@@ -110,17 +100,37 @@ void SpecificWorker::goToTarget(){
 
 }
 
+bool SpecificWorker::targetAtSight(){
+	QPolygonF poly;
+	for(auto l : trimLaser(laser_proxy->getLaserData(), 35)){
+		auto lr = innerModel->laserTo("world", "laser", l.dist, l.angle);
+	   	poly << QPointF(lr.x(), lr.z());
+	}
+	qDebug() << poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
+	return poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
+}
+
+bool SpecificWorker::aligned(){
+	auto l = laser_proxy->getLaserData()[99];
+	return (375 < l.dist) && (l.dist < 425);
+}
+
 void SpecificWorker::bug(){
-		bs = botState::IDLE;
-		differentialrobot_proxy->stopBase();
-		t.setInactive();
+	if(targetAtSight()){
+		bs = botState::GOTO;
+		qDebug() << "BUG -> GOTO";
+		return;
+	}
+	if(aligned())
+  		differentialrobot_proxy->setSpeedBase(200, 0); 
+	else differentialrobot_proxy->setSpeedBase(0, 0.3); 
+
 }
 
 void SpecificWorker::compute( )
 {		
     try
     {		
-		RoboCompGenericBase::TBaseState bState;
 		differentialrobot_proxy->getBaseState(bState);
 
 		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
@@ -128,7 +138,8 @@ void SpecificWorker::compute( )
 		if(std::get<0>(t.activoAndGet())){
 				target = std::get<1>(t.activoAndGet());
 		}
-	
+
+
 		switch(this->bs){
 			case botState::IDLE:
 				if(std::get<0>(t.activoAndGet())){
