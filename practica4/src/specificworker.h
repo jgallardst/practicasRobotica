@@ -42,18 +42,20 @@ public:
 	~SpecificWorker();
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 	void setPick(const Pick &myPick);
-	void stop(){
-		std::this_thread::sleep_for( std::chrono::milliseconds(300000) );
- 		differentialrobot_proxy->setSpeedBase(0, 0);
-        	std::cout << "Saliendo" << std::endl;
-		exit(0);
-	}
+	void goToTarget();
+	bool checkObstacle(TLaserData lData);
+	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata);
+
+
    
 
 public slots:
 	void compute();
 
 private:
+  	enum class botState {IDLE, GOTO, BUG};
+	botState bs = botState::IDLE;
+	target_t target;
 	std::shared_ptr<InnerModel> innerModel;
 	int speed = 250;
 	bool chooseSide = false;
