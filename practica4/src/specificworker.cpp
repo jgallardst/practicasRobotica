@@ -49,7 +49,7 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
-RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ldata, int cut){
+RoboCompLaser::TLaserData SpecificWorker::trimLaser(int cut){
 	RoboCompLaser::TLaserData ldataTrimmed;
         for(int i = cut; i <= (100-cut); i++){
  		ldataTrimmed.push_back(ldata.at(i));
@@ -57,20 +57,33 @@ RoboCompLaser::TLaserData SpecificWorker::trimLaser(RoboCompLaser::TLaserData ld
 	return ldataTrimmed;
 }
 
-bool SpecificWorker::checkObstacle()
+bool SpecificWorker::checkObstacle(int distance)
 {
-	int distance = 300;
-	RoboCompLaser::TLaserData ldata = trimLaser(laser_proxy->getLaserData(), 30);
-    std::sort( ldata.begin(), ldata.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
-    return ( ldata.front().dist < distance );
+	RoboCompLaser::TLaserData ldataTrimmed = trimLaser(15);
+    std::sort( ldataTrimmed.begin(), ldataTrimmed.end(), [](RoboCompLaser::TData a, RoboCompLaser::TData b){ return     a.dist < b.dist; }) ;
+	qDebug() << ldataTrimmed.front().dist;
+    return ( ldataTrimmed.front().dist < distance );
   
 }
 
+// Gaussian distribution
+static float F2(float x){
+	static const float inv_sqrt_2pi = 0.3989422804014327;
+    float a = (x - 0) / 0.2;
+
+    return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
+}
+
+static float F1(float norm){
+	if(norm > 200) return 1;
+	if(norm == 0) return 0;
+	else return (norm/200.0);
+}
 
 void SpecificWorker::goToTarget(){
-	if(checkObstacle()){
-		qDebug() << "GOTO -> BUG";
-		bs = botState::BUG;
+	if(checkObstacle(300)){
+		qDebug() << "GOTO -> GIRO";
+		bs = botState::GIRO;
 		return;
 	}
 
@@ -79,52 +92,93 @@ void SpecificWorker::goToTarget(){
 	float angle = atan2(relative.x(), relative.z());
 	float mod = relative.norm2();
 
-	if(mod < 100){
+	if(mod < 200){
 		qDebug() << "GOTO -> IDLE";
 		bs = botState::IDLE;
 		differentialrobot_proxy->stopBase();
 		t.setInactive();
 		return;
 	}
-
-
-	float speed = mod;
-
-	if( fabs(angle) > 0.05) speed = 0;
-	if(speed > 500) speed = 500;
 	try
   	{
-  		differentialrobot_proxy->setSpeedBase(speed, angle); 
+		differentialrobot_proxy->setSpeedBase(400 * F1(mod) * F2(angle), angle); 
  	}
   	catch ( const Ice::Exception &ex ) {  std::cout << ex << std::endl; }
 
 }
 
-bool SpecificWorker::targetAtSight(){
-	QPolygonF poly;
-	for(auto l : trimLaser(laser_proxy->getLaserData(), 35)){
-		auto lr = innerModel->laserTo("world", "laser", l.dist, l.angle);
-	   	poly << QPointF(lr.x(), lr.z());
+float SpecificWorker::controlIzquierda()
+{
+	int control = 92;
+	float c = ldata[control].dist;
+	for(int i=control-8; i<control+8;i++)
+	{
+		if (ldata[i].dist < c)
+			c = ldata[i].dist;
 	}
-	qDebug() << poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
-	return poly.containsPoint(QPointF(target.x, target.z), Qt::WindingFill);
+	return c;
 }
 
-bool SpecificWorker::aligned(){
-	auto l = laser_proxy->getLaserData()[99];
-	return (375 < l.dist) && (l.dist < 425);
+bool SpecificWorker::targetAtSight(){
+	QPolygonF poly;
+	for(auto l : trimLaser(10)){
+		auto lr = innerModel->laserTo("world", "laser", l.dist, l.angle);
+	   	poly << QPoint(lr.x(), lr.z());
+	}
+	return (controlIzquierda() > 350 && poly.containsPoint(QPoint(target.x, target.z), Qt::WindingFill));
+}
+
+void SpecificWorker::girar(){
+	if(!checkObstacle(375)){
+		bs = botState::BUG;
+		qDebug()  << "GIRO -> BUG";
+		performed = false;
+		differentialrobot_proxy->setSpeedBase(0, 0);
+		return;
+	}
+	try
+	{
+		differentialrobot_proxy->setSpeedBase(0, 0.5);
+	}
+  catch ( const Ice::Exception &ex ) {  std::cout << ex << std::endl; }
 }
 
 void SpecificWorker::bug(){
-	if(targetAtSight()){
-		bs = botState::GOTO;
-		qDebug() << "BUG -> GOTO";
+
+	if(performed)
+		lineDiff = fabs(mline.perpendicularDistanceToPoint(QVec::vec3(bState.x, 0, bState.z)));
+	else lineDiff = 100;
+
+	if(checkObstacle(350)){
+		bs = botState::GIRO;
+		qDebug()  << "BUG -> GIRO";
+		differentialrobot_proxy->setSpeedBase(0, 0);
 		return;
 	}
-	if(aligned())
-  		differentialrobot_proxy->setSpeedBase(200, 0); 
-	else differentialrobot_proxy->setSpeedBase(0, 0.3); 
 
+	if(targetAtSight()){
+		bs = botState::GOTO;
+		qDebug() << "TARGET AT SIGHT: BUG -> GOTO";
+		return;
+	}
+	if( lineDiff < 50){
+		bs = botState::GOTO;
+		qDebug() << "MLINE NEAR: BUG -> GOTO";
+		return;
+	}
+
+	float const alfa = log( 0.1) / log( 0.3);
+  	float dist = controlIzquierda();
+
+	float k=0.1;  // pendiente de la sigmoide
+  	float vrot =  -((1./(1. + exp(-k*(dist - 450.))))-1./2.);		//sigmoide para meter vrot entre -0.5 y 0.5. La k ajusta la pendiente.
+  	float vadv = 350 * exp ( - ( fabs ( vrot ) * alfa ) ); 		//gaussiana para amortiguar la vel. de avance en funcion de vrot
+	performed = true;
+	try
+  	{
+  		differentialrobot_proxy->setSpeedBase(vadv, vrot); 
+ 	}
+  	catch ( const Ice::Exception &ex ) {  std::cout << ex << std::endl; }
 }
 
 void SpecificWorker::compute( )
@@ -132,7 +186,7 @@ void SpecificWorker::compute( )
     try
     {		
 		differentialrobot_proxy->getBaseState(bState);
-
+		ldata = laser_proxy->getLaserData();
 		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
 
 		if(std::get<0>(t.activoAndGet())){
@@ -146,6 +200,9 @@ void SpecificWorker::compute( )
 					bs = botState::GOTO;
 					qDebug() << "IDLE -> GOTO";
 				}
+				break;
+			case botState::GIRO:
+				girar();
 				break;
 			case botState::GOTO:
 				goToTarget();
@@ -165,6 +222,7 @@ void SpecificWorker::setPick(const Pick &myPick)
 {
   qDebug() << "PRESSED ON: X: " << myPick.x << " Z: " << myPick.z;
   t.set(myPick.x, myPick.z);
+  mline = QLine2D(QVec::vec3(bState.x, 0, bState.z), QVec::vec3(target.x, 0, target.z));
 }
 
 

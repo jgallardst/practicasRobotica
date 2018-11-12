@@ -43,11 +43,14 @@ public:
 	bool setParams(RoboCompCommonBehavior::ParameterList params);
 	void setPick(const Pick &myPick);
 	void goToTarget();
-	bool checkObstacle();
+	bool checkObstacle(int distance);
 	void bug();
+	float controlIzquierda();
+	void girar();
+	int checkDist();
 	bool targetAtSight();
 	bool aligned();
-	RoboCompLaser::TLaserData trimLaser(RoboCompLaser::TLaserData ldata, int i);
+	RoboCompLaser::TLaserData trimLaser(int cut);
 
 
    
@@ -57,8 +60,9 @@ public slots:
 
 private:
 	RoboCompGenericBase::TBaseState bState;
-  	enum class botState {IDLE, GOTO, BUG};
+  	enum class botState {IDLE, GOTO, GIRO, BUG};
 	botState bs = botState::IDLE;
+	RoboCompLaser::TLaserData ldata;
 	target_t target;
 	std::shared_ptr<InnerModel> innerModel;
 	int speed = 250;
@@ -66,6 +70,9 @@ private:
 	std::thread finish;
 	bool triggerSet = false;
 	Target t;
+	float lineDiff;
+	bool performed;
+	QLine2D mline;
 };
 
 #endif
