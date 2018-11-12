@@ -170,13 +170,13 @@ void SpecificWorker::bug(){
 	float const alfa = log( 0.1) / log( 0.3);
   	float dist = controlIzquierda();
 
-	float k=0.1;  // pendiente de la sigmoide
-  	float vrot =  -((1./(1. + exp(-k*(dist - 450.))))-1./2.);		//sigmoide para meter vrot entre -0.5 y 0.5. La k ajusta la pendiente.
-  	float vadv = 350 * exp ( - ( fabs ( vrot ) * alfa ) ); 		//gaussiana para amortiguar la vel. de avance en funcion de vrot
+	float k=0.1;
+  	float angle =  -((1./(1. + exp(-k*(dist - 450.))))-1./2.);
+  	float speed = 350 * exp ( - ( fabs ( angle ) * alfa ) ); 
 	performed = true;
 	try
   	{
-  		differentialrobot_proxy->setSpeedBase(vadv, vrot); 
+  		differentialrobot_proxy->setSpeedBase(speed, angle); 
  	}
   	catch ( const Ice::Exception &ex ) {  std::cout << ex << std::endl; }
 }
