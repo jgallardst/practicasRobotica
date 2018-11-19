@@ -28,6 +28,7 @@
 #include <innermodel/innermodel.h>
 #include "grid.h"
 #include <QGraphicsScene>
+#include "Target.h"
 #include <QGraphicsView>
 #include <QGraphicsEllipseItem>
 #include <iostream>
@@ -57,7 +58,7 @@ class SpecificWorker : public GenericWorker
 		void draw();
 		QGraphicsRectItem *robot;
 		QGraphicsEllipseItem *noserobot;
-		QVec target;
+		// QVec target;
 		std::string fileName = "map.txt";
 		const int tilesize = 70;
 		std::atomic<bool> targetReady = false;
@@ -69,7 +70,6 @@ class SpecificWorker : public GenericWorker
 		
 		void updateVisitedCells(int x, int z);
 		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);
-		void checkTransform(const RoboCompGenericBase::TBaseState &bState);
 		
 		/// Grid
 		struct TCell
@@ -87,6 +87,10 @@ class SpecificWorker : public GenericWorker
 		
 		using TDim = Grid<TCell>::Dimensions;
 		Grid<TCell> grid;
+
+		// Target
+		Target t;
+		target_t target;
 		
 
 };

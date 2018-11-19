@@ -92,8 +92,8 @@ class Grid
 		
 		typename FMap::iterator begin() 							{ return fmap.begin(); };
 		typename FMap::iterator end() 								{ return fmap.end();   };
-		typename FMap::const_iterator begin() const   { return fmap.begin(); };
-		typename FMap::const_iterator end() const 	 	{ return fmap.begin(); };
+		typename FMap::const_iterator begin() const   { return fmap.cbegin(); };
+		typename FMap::const_iterator end() const 	 	{ return fmap.cend(); };
 		size_t size() const 													{ return fmap.size();  };
 		
 		void initialize(const Dimensions &dim_, T &&initValue)
@@ -162,7 +162,7 @@ class Grid
 			{
 				Key lk{k.x + *itx, k.z + *itz}; 
 				typename FMap::const_iterator it = fmap.find(lk);
-				if( it != fmap.end() ) //and not an obstacle
+				if( it != fmap.end() && it->second.free) //and not an obstacle
 					neigh.push_back({lk,it->second});
 			};
 			return neigh;
@@ -174,6 +174,8 @@ class Grid
 			int kz = (z-dim.VMIN)/dim.TILE_SIZE;
 			return Key(dim.HMIN + kx*dim.TILE_SIZE, dim.VMIN + kz*dim.TILE_SIZE);
 		};
+
+		bool obstacle(const Key &k){ return fmap[k].free;}
 		
 		std::list<QVec> djikstra(const Key &source, const Key &target)
 		{

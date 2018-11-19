@@ -63,8 +63,6 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	robot = scene.addRect(QRectF(-200, -200, 400, 400), QPen(), QBrush(Qt::blue));
 	noserobot = new QGraphicsEllipseItem(-50,100, 100,100, robot);
 	noserobot->setBrush(Qt::magenta);
-
-	target = QVec::vec3(0,0,0);
 	
 	//qDebug() << __FILE__ << __FUNCTION__ << "CPP " << __cplusplus;
 	
@@ -72,9 +70,26 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	connect(buttonRead, SIGNAL(clicked()), this, SLOT(readFromFile()));
 	
 	timer.start();
-	
+	// AutoLoad Map
+	readFromFile();
+
 	return true;
 }
+
+// Gaussian distribution
+static float F2(float x){
+	static const float inv_sqrt_2pi = 0.3989422804014327;
+    float a = (x - 0) / 0.2;
+
+    return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
+}
+
+static float F1(float norm){
+	if(norm > 200) return 1;
+	if(norm == 0) return 0;
+	else return (norm/200.0);
+}
+
 
 void SpecificWorker::compute()
 {
@@ -91,35 +106,35 @@ void SpecificWorker::compute()
 		
 		//updateVisitedCells(bState.x, bState.z);
 		updateOccupiedCells(bState, ldata);
-		
-		if(targetReady)
-		{
-			if(planReady)
-			{
-				if(path.empty())
-				{
-					qDebug() << "Arrived to target";
-					targetReady = false; 
-				}
-				else
-						if((QVec::vec2(bState.x, bState.z) - currentPoint).norm2() < 50)
-						{
-							currentPoint = path.front();
-							path.pop_front();
-						}
-						else
-						{
-							//GOTO Point
-						}
-			}
-			else
-			{
-				qDebug() << bState.x << bState.z << target.x() << target.z() ;
-				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), target);
+
+		auto relative =  (innerModel->transform("base", QVec::vec3(target.x, 0, target.z), "world"));
+		float angle = atan2(relative.x(), relative.z());
+		float mod = relative.norm2();
+
+		if(std::get<0>(t.activoAndGet())){
+				target = std::get<1>(t.activoAndGet());
+				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
 				for(auto &p: path)
 					greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
-				planReady = true;
-			}
+				currentPoint = path.front();
+				path.pop_front();
+				t.setInactive();
+		}
+
+		
+		if(path.empty())
+		{
+			qDebug() << "Arrived to target";
+			differentialrobot_proxy->setSpeedBase(0,0); 
+		}
+		else if((QVec::vec2(bState.x, bState.z) - currentPoint).norm2() < 150)
+		{
+			currentPoint = path.front();
+			path.pop_front();
+		}
+		else
+		{
+			differentialrobot_proxy->setSpeedBase(1000 * F1(mod) * F2(angle), angle); 
 		}
 	}
  	catch(const Ice::Exception &e)
@@ -167,17 +182,6 @@ void SpecificWorker::readFromFile()
 	}
 	else
 		throw std::runtime_error("Cannot open file");
-}
-
-void SpecificWorker::checkTransform(const RoboCompGenericBase::TBaseState &bState)
-{
-	auto r = innerModel->transform("base", target, "world");		// using InnerModel
-	
-	Rot2D rot(bState.alpha);																		// create a 2D clockwise rotation matrix
-	QVec t = QVec::vec2(bState.x, bState.z);									  // create a 2D vector for robot translation
-	QVec t2 = QVec::vec2(target.x(), target.z());								// create a 2D vector from the 3D target
-	QVec q = rot.transpose() * ( t2 - t);												// multiply R_t * (y - T)
-	qDebug() << target << r << q;
 }
 
 void SpecificWorker::updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata)
@@ -232,14 +236,10 @@ void SpecificWorker::draw()
 
 void SpecificWorker::setPick(const Pick &myPick)
 {
-	target[0] = myPick.x;
-	target[2] = myPick.z;
-	target[1] = 0;
-	qDebug() << __FILE__ << __FUNCTION__ << myPick.x << myPick.z ;
-	targetReady = true;
-	planReady = false;
+	qDebug() << "PRESSED ON: X: " << myPick.x << " Z: " << myPick.z;
+  	t.set(myPick.x, myPick.z);
 	for(auto gp: greenPath)
 		delete gp;
 	greenPath.clear();
-	
+	path.clear();
 }
