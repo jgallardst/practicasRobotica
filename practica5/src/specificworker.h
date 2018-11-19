@@ -16,51 +16,70 @@
  *    You should have received a copy of the GNU General Public License
  *    along with RoboComp.  If not, see <http://www.gnu.org/licenses/>.
  */
-
 /**
        \brief
        @author authorname
 */
 
-
-
 #ifndef SPECIFICWORKER_H
 #define SPECIFICWORKER_H
 
-#include <chrono>
 #include <genericworker.h>
-#include <random>
 #include <innermodel/innermodel.h>
-#include <stdlib.h> 
-#include <Target.h>
+#include "grid.h"
+#include <QGraphicsScene>
+#include <QGraphicsView>
+#include <QGraphicsEllipseItem>
+#include <iostream>
+#include <fstream>
 
 class SpecificWorker : public GenericWorker
 {
-Q_OBJECT
-public:
-	SpecificWorker(MapPrx& mprx);
-	~SpecificWorker();
-	bool setParams(RoboCompCommonBehavior::ParameterList params);
-	void setPick(const Pick &myPick);
-	void stop(){
-		std::this_thread::sleep_for( std::chrono::milliseconds(300000) );
- 		differentialrobot_proxy->setSpeedBase(0, 0);
-        	std::cout << "Saliendo" << std::endl;
-		exit(0);
-	}
-   
+	Q_OBJECT
+	public:
+		SpecificWorker(MapPrx& mprx);
+		~SpecificWorker();
+		bool setParams(RoboCompCommonBehavior::ParameterList params);
+		
+		// Ice subscription
+		void setPick(const Pick &myPick);
 
-public slots:
-	void compute();
+	public slots:
+		void compute();
+		void saveToFile();
+		void readFromFile();
 
-private:
-	std::shared_ptr<InnerModel> innerModel;
-	int speed = 250;
-	bool chooseSide = false;
-	bool aligned = false;
-	std::thread finish;
-	bool triggerSet = false;
-	Target t;
+	private:
+		std::shared_ptr<InnerModel> innerModel;
+		QGraphicsScene scene;
+		QGraphicsView view;
+		void draw();
+		QGraphicsRectItem *robot;
+		QGraphicsEllipseItem *noserobot;
+		QVec target;
+		std::string fileName = "map.txt";
+		const int tilesize = 70;
+		
+		void updateVisitedCells(int x, int z);
+		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);
+		void checkTransform(const RoboCompGenericBase::TBaseState &bState);
+		
+		/// Grid
+		struct TCell
+		{
+			bool free;
+			bool visited;
+			QGraphicsRectItem* rect;
+			
+			// method to save the value
+			void save(std::ostream &os) const {	os << free << " " << visited; };
+			void read(std::istream &is) {	is >> free >> visited ;};
+		};
+		
+		using TDim = Grid<TCell>::Dimensions;
+		Grid<TCell> grid;
+		
+
 };
 
 #endif
