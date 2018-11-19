@@ -76,21 +76,6 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
-// Gaussian distribution
-static float F2(float x){
-	static const float inv_sqrt_2pi = 0.3989422804014327;
-    float a = (x - 0) / 0.2;
-
-    return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
-}
-
-static float F1(float norm){
-	if(norm > 200) return 1;
-	if(norm == 0) return 0;
-	else return (norm/200.0);
-}
-
-
 void SpecificWorker::compute()
 {
 	static RoboCompGenericBase::TBaseState bState;
@@ -107,19 +92,21 @@ void SpecificWorker::compute()
 		//updateVisitedCells(bState.x, bState.z);
 		updateOccupiedCells(bState, ldata);
 
-		auto relative =  (innerModel->transform("base", QVec::vec3(target.x, 0, target.z), "world"));
-		float angle = atan2(relative.x(), relative.z());
-		float mod = relative.norm2();
-
 		if(std::get<0>(t.activoAndGet())){
 				target = std::get<1>(t.activoAndGet());
 				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
-				for(auto &p: path)
-					greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
-				currentPoint = path.front();
-				path.pop_front();
+				if(!path.empty()){
+					for(auto &p: path)
+						greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
+					currentPoint = path.front();
+					path.pop_front();
+				}
 				t.setInactive();
 		}
+
+		auto relative =  (innerModel->transform("base", QVec::vec3(currentPoint.x(), 0, currentPoint.z()), "world"));
+		float angle = atan2(relative.x(), relative.z());
+		float mod = relative.norm2();
 
 		
 		if(path.empty())
@@ -127,14 +114,17 @@ void SpecificWorker::compute()
 			qDebug() << "Arrived to target";
 			differentialrobot_proxy->setSpeedBase(0,0); 
 		}
-		else if((QVec::vec2(bState.x, bState.z) - currentPoint).norm2() < 150)
+		else if(mod < 200)
 		{
+			qDebug() << "Picking new point";
 			currentPoint = path.front();
 			path.pop_front();
 		}
-		else
+		else if(abs(angle) > 0.2)
 		{
-			differentialrobot_proxy->setSpeedBase(1000 * F1(mod) * F2(angle), angle); 
+			differentialrobot_proxy->setSpeedBase(0, angle); 
+		} else {
+			differentialrobot_proxy->setSpeedBase(400, 0.3 * angle); 
 		}
 	}
  	catch(const Ice::Exception &e)
