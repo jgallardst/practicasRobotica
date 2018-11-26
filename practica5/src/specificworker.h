@@ -70,7 +70,7 @@ class SpecificWorker : public GenericWorker
 
 		void updateVisitedCells(int x, int z);
 		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);
-		std::list<QVec> bezierTransform(std::list<QVec> points, float t);
+		std::list<QVec> bezierTransform(std::list<QVec> points, float accuracy);
 		float interpolate(float n1, float n2, float prec){return n1 + ((n2-n1) * prec);}	
 		/// Grid
 		struct TCell

@@ -76,7 +76,7 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
-std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float t) {
+std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float accuracy) {
 	if (points.size() <= 2) return points;
 	std::vector<QVec> bezierVec;
 	std::list<QVec> bezier;
@@ -85,7 +85,7 @@ std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float t)
 		points.pop_back();
 	}
 	bezier.push_front(bezierVec[0]);
-    for(float i=0.f; i<1.f; i+=1.f/t){
+    for(float i=0.f; i<1.f; i+=1.f/accuracy){
 		std::vector<QVec> temp;
         for(unsigned int j=1; j<bezierVec.size(); ++j)
             temp.push_back(QVec::vec3(interpolate(bezierVec[j-1].x(), bezierVec[j].x(), i), 0,
