@@ -76,6 +76,20 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
+// Gaussian distribution
+static float F2(float x){
+	static const float inv_sqrt_2pi = 0.3989422804014327;
+    float a = (x - 0) / 0.2;
+
+    return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
+}
+
+static float F1(float norm){
+	if(norm > 50) return 1;
+	if(norm == 0) return 0;
+	else return (norm/50.0);
+}
+
 std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float accuracy) {
 	if (points.size() <= 2) return points;
 	std::vector<QVec> bezierVec;
@@ -156,11 +170,8 @@ void SpecificWorker::compute()
 				bezier.pop_front();
 			}
 		}
-		else if(abs(angle) > 0.2)
-		{
-			differentialrobot_proxy->setSpeedBase(0, angle); 
-		} else {
-			differentialrobot_proxy->setSpeedBase(400, 0.3 * angle); 
+		else {
+			differentialrobot_proxy->setSpeedBase(400 * F1(mod) * F2(angle), angle); 
 		}
 	}
  	catch(const Ice::Exception &e)
