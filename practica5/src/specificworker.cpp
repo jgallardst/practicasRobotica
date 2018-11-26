@@ -157,7 +157,7 @@ void SpecificWorker::compute()
 
 		
 
-		if(mod < 200)
+		if(mod < 100)
 		{
 			if(bezier.empty())
 			{
