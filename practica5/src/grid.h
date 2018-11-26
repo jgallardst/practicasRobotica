@@ -200,7 +200,7 @@ class Grid
 			
 				if (where == target) 
 				{
-					qDebug() << __FILE__ << __FUNCTION__  << "Min distance found:" << min_distance[fmap[where].id];  //exit point 
+					qDebug() << __FILE__ << __FUNCTION__  << "Min distance found:" << min_distance[fmap[where].id];  //exit point
 					return orderPath(previous, source, target);
 				}
 				active_vertices.erase( active_vertices.begin() );

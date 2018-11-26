@@ -77,21 +77,31 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 }
 
 std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float t) {
-	int numPoints = points.size();	
+	if (points.size() <= 2) return points;
 	std::vector<QVec> bezierVec;
 	std::list<QVec> bezier;
 	while(!points.empty()){
 		bezierVec.push_back(points.back());
 		points.pop_back();
 	}
-	int i = numPoints - 1;
-	while (i > 0) {
-        for (int k = 0; k < i; k++)
-            bezierVec[k] = bezierVec[k] + (QVec::vec3(t,0,t) * ( bezierVec[k+1] - bezierVec[k] ));
-        i--;
-    }
-	for(int j = 0; j < bezierVec.size(); j++){
-		bezier.push_front(bezierVec[j]);
+	bezier.push_front(bezierVec[0]);
+    for(float i=0.f; i<1.f; i+=1.f/t){
+		std::vector<QVec> temp;
+        for(unsigned int j=1; j<bezierVec.size(); ++j)
+            temp.push_back(QVec::vec3(interpolate(bezierVec[j-1].x(), bezierVec[j].x(), i), 0,
+                                    interpolate(bezierVec[j-1].z(), bezierVec[j].z(), i)));
+
+        while(temp.size()>1)
+        {
+            std::vector<QVec> temp2;
+
+            for(unsigned int j=1; j<temp.size(); ++j)
+                temp2.push_back(QVec::vec3(interpolate(temp[j-1].x(), temp[j].x(), i), 0,
+                                         interpolate(temp[j-1].z(), temp[j].z(), i)));
+            temp = temp2;
+        }
+        bezier.push_front(temp[0]);
+
 	}
 	return bezier;
 }
@@ -117,7 +127,7 @@ void SpecificWorker::compute()
 				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
 				for(auto &p: path)
 					redPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::red), QBrush(Qt::red)));
-				bezier = this->bezierTransform(path, 0.05);
+				bezier = this->bezierTransform(path, (int)(1.5*path.size()));
 				if(!bezier.empty()){
 					for(auto &p: bezier)
 						greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
