@@ -64,13 +64,13 @@ class SpecificWorker : public GenericWorker
 		std::atomic<bool> targetReady = false;
 		std::atomic<bool> planReady = false;
 		QVec currentPoint;
-		std::list<QVec> path;
+		std::list<QVec> path, bezier;
 		std::vector<QGraphicsEllipseItem *> greenPath;
-		
-		
+		std::vector<QGraphicsEllipseItem *> redPath;
+
 		void updateVisitedCells(int x, int z);
 		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);
-		
+		std::list<QVec> bezierTransform(std::list<QVec> points, float t);		
 		/// Grid
 		struct TCell
 		{
