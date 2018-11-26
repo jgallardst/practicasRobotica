@@ -76,6 +76,26 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
+std::list<QVec> SpecificWorker::bezierTransform(std::list<QVec> points, float t) {
+	int numPoints = points.size();	
+	std::vector<QVec> bezierVec;
+	std::list<QVec> bezier;
+	while(!points.empty()){
+		bezierVec.push_back(points.back());
+		points.pop_back();
+	}
+	int i = numPoints - 1;
+	while (i > 0) {
+        for (int k = 0; k < i; k++)
+            bezierVec[k] = bezierVec[k] + (QVec::vec3(t,0,t) * ( bezierVec[k+1] - bezierVec[k] ));
+        i--;
+    }
+	for(int j = 0; j < bezierVec.size(); j++){
+		bezier.push_front(bezierVec[j]);
+	}
+	return bezier;
+}
+
 void SpecificWorker::compute()
 {
 	static RoboCompGenericBase::TBaseState bState;
@@ -95,11 +115,14 @@ void SpecificWorker::compute()
 		if(std::get<0>(t.activoAndGet())){
 				target = std::get<1>(t.activoAndGet());
 				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
-				if(!path.empty()){
-					for(auto &p: path)
+				for(auto &p: path)
+					redPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::red), QBrush(Qt::red)));
+				bezier = this->bezierTransform(path, 0.05);
+				if(!bezier.empty()){
+					for(auto &p: bezier)
 						greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
-					currentPoint = path.front();
-					path.pop_front();
+					currentPoint = bezier.front();
+					bezier.pop_front();
 				}
 				t.setInactive();
 		}
@@ -109,16 +132,19 @@ void SpecificWorker::compute()
 		float mod = relative.norm2();
 
 		
-		if(path.empty())
+
+		if(mod < 200)
 		{
-			qDebug() << "Arrived to target";
-			differentialrobot_proxy->setSpeedBase(0,0); 
-		}
-		else if(mod < 200)
-		{
-			qDebug() << "Picking new point";
-			currentPoint = path.front();
-			path.pop_front();
+			if(bezier.empty())
+			{
+				qDebug() << "Aligned with target";
+				currentPoint =  QVec::vec3(target.x,0,target.z);
+				differentialrobot_proxy->setSpeedBase(0, 0); 
+			} else {
+				qDebug() << "Picking new point";
+				currentPoint = bezier.front();
+				bezier.pop_front();
+			}
 		}
 		else if(abs(angle) > 0.2)
 		{
@@ -231,5 +257,9 @@ void SpecificWorker::setPick(const Pick &myPick)
 	for(auto gp: greenPath)
 		delete gp;
 	greenPath.clear();
+	for(auto gp: redPath)
+		delete gp;
+	redPath.clear();
 	path.clear();
+	bezier.clear();
 }
