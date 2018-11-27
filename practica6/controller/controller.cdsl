@@ -1,0 +1,21 @@
+import "Laser.idsl";
+import "DifferentialRobot.idsl";
+import "RCISMousePicker.idsl";
+import "GetAprilTags.idsl";
+import "AprilTags.idsl";
+import "RGBD.idsl";
+
+Component controller
+{
+	Communications
+	{
+		requires Laser, DifferentialRobot, RGBD;
+		publishes AprilTags;
+		implements GetAprilTags;
+		subscribesTo RCISMousePicker;
+	};
+	language Cpp;
+	gui Qt(QWidget);
+	
+};
+
