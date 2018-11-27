@@ -73,6 +73,11 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	// AutoLoad Map
 	readFromFile();
 
+
+	// Init
+	RoboCompGenericBase::TBaseState bState;
+ 	differentialrobot_proxy->getBaseState(bState);
+	currentPoint = QVec::vec3(bState.x,0,bState.z);
 	return true;
 }
 
