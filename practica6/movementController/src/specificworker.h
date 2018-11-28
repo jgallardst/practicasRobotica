@@ -53,6 +53,7 @@ class SpecificWorker : public GenericWorker
 
 	private:
 		std::shared_ptr<InnerModel> innerModel;
+		bool aviso = true;
 		QGraphicsScene scene;
 		QGraphicsView view;
 		void draw();

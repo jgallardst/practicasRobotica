@@ -114,7 +114,7 @@ void SpecificWorker::print_detection(vector< ::AprilTags::TagDetection> detectio
 		::AprilTags::TagDetection detection = detections.back();
 		detections.pop_back();
 
-		qDebug() << "  Id: " << detection.id << " (Hamming: " << detection.hammingDistance << ")";
+		qDebug() << "  Id: " << detection.id << " (Hamming: " << detection.hammingDistance << ")" << endl;
 
 		Eigen::Vector3d translation;
 		Eigen::Matrix3d rotation;
@@ -151,7 +151,6 @@ void SpecificWorker::print_detection(vector< ::AprilTags::TagDetection> detectio
 		t.rz=rz;
 		t.cameraId = "rgbd";
 
-		memcpy(&mar, &t, sizeof(RoboCompGetAprilTags::marca));
 		memcpy(&mar, &t, sizeof(RoboCompGetAprilTags::marca));
 		mutex->lock();
 		detections2send.push_back(t);

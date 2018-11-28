@@ -166,11 +166,16 @@ void SpecificWorker::compute()
 		{
 			if(bezier.empty())
 			{
-				qDebug() << "Aligned with target";
+				if(aviso) {
+					aviso = false;
+					qDebug() << "Aligned with target";
+				}
 				currentPoint =  QVec::vec3(target.x,0,target.z);
 				differentialrobot_proxy->setSpeedBase(0, 0); 
 			} else {
-				qDebug() << "Picking new point";
+				if(!aviso) aviso = true;
+				qDebug() << "Going to Target (X:" << target.x << ", Z:" << target.z << ").";
+				qDebug() << "Route to target length: " << bezier.size();
 				currentPoint = bezier.front();
 				bezier.pop_front();
 			}

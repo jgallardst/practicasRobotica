@@ -206,7 +206,7 @@ class Grid
 				active_vertices.erase( active_vertices.begin() );
 				for (auto ed : neighbours(where)) 
 				{
-					qDebug() << "antes del if" << ed.first.x << ed.first.z << ed.second.id << fmap[where].id << min_distance[ed.second.id] << min_distance[fmap[where].id];
+					// qDebug() << "antes del if" << ed.first.x << ed.first.z << ed.second.id << fmap[where].id << min_distance[ed.second.id] << min_distance[fmap[where].id];
 					if (min_distance[ed.second.id] > min_distance[fmap[where].id] + ed.second.cost) 
 					{
 						active_vertices.erase( { min_distance[ed.second.id], ed.first } );
