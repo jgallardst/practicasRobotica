@@ -33,13 +33,6 @@
 #include <DifferentialRobot.h>
 #include <GenericBase.h>
 #include <RCISMousePicker.h>
-#include <GetAprilTags.h>
-#include <AprilTags.h>
-#include <GenericBase.h>
-#include <JointMotor.h>
-#include <RGBD.h>
-#include <JointMotor.h>
-#include <GenericBase.h>
 
 #define CHECK_PERIOD 5000
 #define BASIC_PERIOD 100
@@ -49,13 +42,9 @@ typedef map <string,::IceProxy::Ice::Object*> MapPrx;
 using namespace std;
 
 using namespace RoboCompDifferentialRobot;
-using namespace RoboCompGetAprilTags;
 using namespace RoboCompGenericBase;
-using namespace RoboCompRGBD;
-using namespace RoboCompJointMotor;
 using namespace RoboCompLaser;
 using namespace RoboCompRCISMousePicker;
-using namespace RoboCompAprilTags;
 
 
 
@@ -78,12 +67,9 @@ public:
 	QMutex *mutex;
 
 
-	DifferentialRobotPrx differentialrobot_proxy;
-	RGBDPrx rgbd_proxy;
-	AprilTagsPrx apriltags_proxy;
 	LaserPrx laser_proxy;
+	DifferentialRobotPrx differentialrobot_proxy;
 
-	virtual listaMarcas checkMarcas() = 0;
 	virtual void setPick(const Pick &myPick) = 0;
 
 protected:

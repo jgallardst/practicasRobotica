@@ -30,8 +30,6 @@ QObject()
 {
 	laser_proxy = (*(LaserPrx*)mprx["LaserProxy"]);
 	differentialrobot_proxy = (*(DifferentialRobotPrx*)mprx["DifferentialRobotProxy"]);
-	rgbd_proxy = (*(RGBDPrx*)mprx["RGBDProxy"]);
-	apriltags_proxy = (*(AprilTagsPrx*)mprx["AprilTagsPub"]);
 
 	mutex = new QMutex(QMutex::Recursive);
 

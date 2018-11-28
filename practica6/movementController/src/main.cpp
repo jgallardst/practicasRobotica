@@ -81,7 +81,6 @@
 #include "specificmonitor.h"
 #include "commonbehaviorI.h"
 
-#include <getapriltagsI.h>
 #include <rcismousepickerI.h>
 
 #include <Laser.h>
@@ -89,13 +88,6 @@
 #include <DifferentialRobot.h>
 #include <GenericBase.h>
 #include <RCISMousePicker.h>
-#include <GetAprilTags.h>
-#include <AprilTags.h>
-#include <GenericBase.h>
-#include <JointMotor.h>
-#include <RGBD.h>
-#include <JointMotor.h>
-#include <GenericBase.h>
 
 
 // User includes here
@@ -147,30 +139,11 @@ int ::controller::run(int argc, char* argv[])
 
 	int status=EXIT_SUCCESS;
 
-	RGBDPrx rgbd_proxy;
-	AprilTagsPrx apriltags_proxy;
 	DifferentialRobotPrx differentialrobot_proxy;
 	LaserPrx laser_proxy;
 
 	string proxy, tmp;
 	initialize();
-
-
-	try
-	{
-		if (not GenericMonitor::configGetString(communicator(), prefix, "RGBDProxy", proxy, ""))
-		{
-			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy RGBDProxy\n";
-		}
-		rgbd_proxy = RGBDPrx::uncheckedCast( communicator()->stringToProxy( proxy ) );
-	}
-	catch(const Ice::Exception& ex)
-	{
-		cout << "[" << PROGRAM_NAME << "]: Exception: " << ex;
-		return EXIT_FAILURE;
-	}
-	rInfo("RGBDProxy initialized Ok!");
-	mprx["RGBDProxy"] = (::IceProxy::Ice::Object*)(&rgbd_proxy);//Remote server proxy creation example
 
 
 	try
@@ -217,29 +190,6 @@ int ::controller::run(int argc, char* argv[])
 		return EXIT_FAILURE;
 	}
 
-	IceStorm::TopicPrx apriltags_topic;
-	while (!apriltags_topic)
-	{
-		try
-		{
-			apriltags_topic = topicManager->retrieve("AprilTags");
-		}
-		catch (const IceStorm::NoSuchTopic&)
-		{
-			try
-			{
-				apriltags_topic = topicManager->create("AprilTags");
-			}
-			catch (const IceStorm::TopicExists&){
-				// Another client created the topic.
-			}
-		}
-	}
-	Ice::ObjectPrx apriltags_pub = apriltags_topic->getPublisher()->ice_oneway();
-	AprilTagsPrx apriltags = AprilTagsPrx::uncheckedCast(apriltags_pub);
-	mprx["AprilTagsPub"] = (::IceProxy::Ice::Object*)(&apriltags);
-
-
 
 	SpecificWorker *worker = new SpecificWorker(mprx);
 	//Monitor thread
@@ -269,18 +219,6 @@ int ::controller::run(int argc, char* argv[])
 		adapterCommonBehavior->activate();
 
 
-
-
-		// Server adapter creation and publication
-		if (not GenericMonitor::configGetString(communicator(), prefix, "GetAprilTags.Endpoints", tmp, ""))
-		{
-			cout << "[" << PROGRAM_NAME << "]: Can't read configuration for proxy GetAprilTags";
-		}
-		Ice::ObjectAdapterPtr adapterGetAprilTags = communicator()->createObjectAdapterWithEndpoints("GetAprilTags", tmp);
-		GetAprilTagsI *getapriltags = new GetAprilTagsI(worker);
-		adapterGetAprilTags->add(getapriltags, communicator()->stringToIdentity("getapriltags"));
-		adapterGetAprilTags->activate();
-		cout << "[" << PROGRAM_NAME << "]: GetAprilTags adapter created in port " << tmp << endl;
 
 
 

@@ -11,3 +11,6 @@ CTestTestfile.cmake
 CMakeScripts
 CMakeFiles
 bin
+
+# Robocompcdsl weird files
+*.new
