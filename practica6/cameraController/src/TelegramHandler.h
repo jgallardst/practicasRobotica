@@ -28,6 +28,10 @@
 #define TELEGRAMHANDLER_H
 
 #include <tgbot/tgbot.h>
+#include <iomanip>
+#include <sstream>
+#include <ctime>
+
 
 using namespace TgBot;
 
@@ -35,9 +39,10 @@ class TelegramHandler
 {
 public:
     TelegramHandler();
-    void sendTagFound();
+    void sendTagFound(int tid, int tHamming, int x, int z);
 private:
-    std::string token = "672516351:AAGyUF0mwSdJTZHuuywvlUJ1DCXC4-Szx2I";
+    const std::string token = "672516351:AAGyUF0mwSdJTZHuuywvlUJ1DCXC4-Szx2I";
+    const int id = 14877845;
 };
 
 #endif

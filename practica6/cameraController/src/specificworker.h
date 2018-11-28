@@ -66,13 +66,22 @@ private:
 	// Video settings
 	int m_width;
 	int m_height;
+	double m_fx; // camera focal length in pixels
+	double m_fy;
+	double m_px; // camera principal point
+	double m_py;
 
 	// Img containers
 	cv::Mat image_gray, image_color;
 
+	// Tags lists
+	vector<RoboCompAprilTags::tag> detections2send;
+	vector<RoboCompGetAprilTags::marca> listaDeMarcas;
+
 	// Searching for tags
 	void searchTags(const cv::Mat &image_gray);
 	void print_detection(vector< ::AprilTags::TagDetection> detections);
+	void rotationFromMatrix(const Eigen::Matrix3d &R, double &rx, double &ry, double &rz);
 
 	// Telegram Sender
 	TelegramHandler sender;

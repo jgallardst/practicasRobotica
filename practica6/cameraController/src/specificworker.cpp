@@ -52,6 +52,12 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	m_width = 640;
 	m_height = 480;
 
+	m_px = m_width/2;
+	m_py = m_height/2;
+
+	m_fx = innerModel->getNode<InnerModelRGBD>("rgbd")->getFocal();
+	m_fy = innerModel->getNode<InnerModelRGBD>("rgbd")->getFocal();
+
 	image_gray.create(m_height,m_width,CV_8UC1);
 	image_color.create(m_height,m_width,CV_8UC3);
 
@@ -92,14 +98,19 @@ void SpecificWorker::searchTags(const cv::Mat &image_gray)
 {
     cv::Mat dst = image_gray;          // dst must be a different Mat
     vector<::AprilTags::TagDetection> detections = m_tagDetector->extractTags(dst);
-	qDebug() << "Found tags:"  << detections.size();
-	if(detections.size() > 0) {
+	if(!detections.empty()) {
+		qDebug() << "Found tags: "  << detections.size();
 		print_detection(detections);
 	}
 }
 
 void SpecificWorker::print_detection(vector< ::AprilTags::TagDetection> detections){
+
+	listaDeMarcas.clear();
+	detections2send.clear();
+
 	while (!detections.empty()){
+		// On this way, element is not copied, so handles memory on a better way.
 		::AprilTags::TagDetection detection = detections.back();
 		detections.pop_back();
 
@@ -108,15 +119,100 @@ void SpecificWorker::print_detection(vector< ::AprilTags::TagDetection> detectio
 		Eigen::Vector3d translation;
 		Eigen::Matrix3d rotation;
 
+		///SIN PROBAR PERO DEBERIA IR. SI NO ENCUNETRA EL ID METE m_tagSize
+		const float ss = tagsSizeMap.value(detection.id, m_tagSize);
+
+		detection.getRelativeTranslationRotation(ss, m_fx, m_fy, m_px, m_py, translation, rotation);
+		QVec T(3);
+		T(0) = -translation(1);//*0.65;
+		T(1) =  translation(2);//*0.65;
+		T(2) =  translation(0);//*0.65;
+
+		Eigen::Matrix3d F;
+		F << 1, 0,  0,	0,  -1,  0,	0,  0,  1;
+		Eigen::Matrix3d fixed_rot = F*rotation;
+
+		double rx, ry, rz;
+		rotationFromMatrix(fixed_rot, rx, ry, rz);
+
+		qDebug() << "  distance=" << T.norm2() << ", x=" << T(0) << ", y=" << T(1) << ", z=" << T(2) << ", rx=" << rx << ", ry=" << ry << ", rz=" << rz << endl;
+		sender.sendTagFound(detection.id, detection.hammingDistance, bState.x, bState.z);
+
+		RoboCompAprilTags::tag t;
+		RoboCompGetAprilTags::marca mar;
+
+		t.id=detection.id;
+		t.tx=T(0);
+		t.ty=T(1);
+		t.tz=T(2);
+		//Change the x,y,z rotation values to match robocomp's way
+		t.rx=rx;
+		t.ry=ry;
+		t.rz=rz;
+		t.cameraId = "rgbd";
+
+		memcpy(&mar, &t, sizeof(RoboCompGetAprilTags::marca));
+		memcpy(&mar, &t, sizeof(RoboCompGetAprilTags::marca));
+		mutex->lock();
+		detections2send.push_back(t);
+		listaDeMarcas.push_back(mar);
+		mutex->unlock();
 	}
+
+	if (!detections2send.empty())
+	{
+		try
+		{
+			apriltags_proxy->newAprilTag(detections2send);
+		}
+		catch(const Ice::Exception &ex)
+		{
+			std::cout << ex << std::endl;
+		}
+		try
+		{
+			// qDebug()<<"bState"<<bState.correctedX<<bState.correctedZ<<bState.correctedAlpha;
+			apriltags_proxy->newAprilTagAndPose(detections2send,bState,hState);
+		}
+		catch(const Ice::Exception &ex)
+		{
+			std::cout << ex << std::endl;
+		}
+	}
+}
+
+void SpecificWorker::rotationFromMatrix(const Eigen::Matrix3d &R, double &rx, double &ry, double &rz)
+{
+	QMat v(3,3);
+	for (uint32_t f=0; f<3; f++)
+	{
+		for (uint32_t c=0; c<3; c++)
+		{
+			v(f,c) = R(f,c);
+		}
+	}
+	QVec ret = v.extractAnglesR_min();
+	rx = ret(0)+M_PIl;
+	while (rx >= M_PIl) rx -= 2.*M_PIl;
+	while (rx < -M_PIl) rx += 2.*M_PIl;
+	ry = -ret(1);
+	rz = ret(2);
+
+/*
+	yaw = standardRad(atan2(wRo(1,0), wRo(0,0)));
+	double c = cos(yaw);
+	double s = sin(yaw);
+	pitch = standardRad(atan2(-wRo(2,0), wRo(0,0)*c + wRo(1,0)*s));
+	roll  = standardRad(atan2(wRo(0,2)*s - wRo(1,2)*c, -wRo(0,1)*s + wRo(1,1)*c));
+*/
 }
 
 
 
 listaMarcas SpecificWorker::checkMarcas()
 {
-//implementCODE
-
+  QMutexLocker locker(mutex);
+  return  listaDeMarcas;
 }
 
 
