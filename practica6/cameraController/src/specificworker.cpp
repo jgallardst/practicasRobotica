@@ -59,14 +59,15 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 void SpecificWorker::compute()
 {
 	QMutexLocker locker(mutex);
+	static RoboCompRGBD::ColorSeq colorseq;
 	try
 	{
-		RoboCompRGBD::ColorSeq colorseq;
-		RoboCompRGBD::DepthSeq depthseq;
 		rgbd_proxy->getRGB(colorseq, hState, bState);
+		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
 		memcpy(image_color.data , &colorseq[0], width*height*3);
 		cv::cvtColor(image_color, image_gray, CV_RGB2GRAY);
 		searchTags(image_gray);
+		usleep(2000000);
 	}
 	catch(const Ice::Exception &e)
 	{
@@ -79,8 +80,10 @@ void SpecificWorker::searchTags(const cv::Mat &image_gray)
     cv::Mat dst = image_gray;          // dst must be a different Mat
     cv::flip(image_gray, dst, 0);
     vector<AprilTags::TagDetection> detections = m_tagDetector->extractTags(dst);
-
-	cout << detections.size() << " tags detected:" << endl;
+	qDebug() << "Found tags:"  << detections.size();
+	if(detections.size() > 0) {
+		sender.sendTagFound();
+	}
 }
 
 

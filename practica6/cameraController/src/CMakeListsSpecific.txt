@@ -3,12 +3,14 @@
 SET ( SOURCES
   specificworker.cpp
   specificmonitor.cpp
+  TelegramHandler.cpp
 )
 
 # Headers set
 SET ( HEADERS
   specificworker.h
   specificmonitor.h
+  TelegramHandler.h
 )
 
 find_package(OpenMP)

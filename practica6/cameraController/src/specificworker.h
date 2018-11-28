@@ -35,6 +35,8 @@
 #include "AprilTags/TagDetector.h"
 #include "AprilTags/Tag36h11.h"
 
+#include "TelegramHandler.h"
+
 class SpecificWorker : public GenericWorker
 {
 Q_OBJECT
@@ -65,6 +67,9 @@ private:
 
 	// Searching for tags
 	void searchTags(const cv::Mat &image_gray);
+
+	// Telegram API Bot
+	TelegramHandler sender;
 };
 
 #endif
