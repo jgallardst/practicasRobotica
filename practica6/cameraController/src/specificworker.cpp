@@ -21,7 +21,7 @@
 /**
 * \brief Default constructor
 */
-SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx)
+SpecificWorker::SpecificWorker(MapPrx& mprx) : GenericWorker(mprx), m_tagCodes(::AprilTags::tagCodes36h11)
 {
 
 }
@@ -45,13 +45,27 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	}
 	catch(std::exception e) { qFatal("Error reading config params"); }
 
-	m_tagDetector = new AprilTags::TagDetector(AprilTags::tagCodes36h11);
+	m_tagDetector = new ::AprilTags::TagDetector(::AprilTags::tagCodes36h11);
 
 	qDebug() << "Creating RGBD Interface variables...";
-	image_gray.create(height,width,CV_8UC1);
-	image_color.create(height,width,CV_8UC3);
 
-	timer.start(Period);
+	m_width = 640;
+	m_height = 480;
+
+	image_gray.create(m_height,m_width,CV_8UC1);
+	image_color.create(m_height,m_width,CV_8UC3);
+
+	// Default value for IDs not defined before
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("AprilTagsSize");
+		qDebug() << QString::fromStdString(par.value);
+		Q_ASSERT(par.value > 0);
+		m_tagSize = QString::fromStdString(par.value).toFloat();
+	}
+	catch(std::exception e) { std::cout << e.what() << std::endl;}
+
+	timer.start(10);
 
 	return true;
 }
@@ -63,8 +77,7 @@ void SpecificWorker::compute()
 	try
 	{
 		rgbd_proxy->getRGB(colorseq, hState, bState);
-		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
-		memcpy(image_color.data , &colorseq[0], width*height*3);
+		memcpy(image_color.data , &colorseq[0], m_height*m_width*3);
 		cv::cvtColor(image_color, image_gray, CV_RGB2GRAY);
 		searchTags(image_gray);
 		usleep(2000000);
@@ -78,13 +91,26 @@ void SpecificWorker::compute()
 void SpecificWorker::searchTags(const cv::Mat &image_gray)
 {
     cv::Mat dst = image_gray;          // dst must be a different Mat
-    cv::flip(image_gray, dst, 0);
-    vector<AprilTags::TagDetection> detections = m_tagDetector->extractTags(dst);
+    vector<::AprilTags::TagDetection> detections = m_tagDetector->extractTags(dst);
 	qDebug() << "Found tags:"  << detections.size();
 	if(detections.size() > 0) {
-		sender.sendTagFound();
+		print_detection(detections);
 	}
 }
+
+void SpecificWorker::print_detection(vector< ::AprilTags::TagDetection> detections){
+	while (!detections.empty()){
+		::AprilTags::TagDetection detection = detections.back();
+		detections.pop_back();
+
+		qDebug() << "  Id: " << detection.id << " (Hamming: " << detection.hammingDistance << ")";
+
+		Eigen::Vector3d translation;
+		Eigen::Matrix3d rotation;
+
+	}
+}
+
 
 
 listaMarcas SpecificWorker::checkMarcas()

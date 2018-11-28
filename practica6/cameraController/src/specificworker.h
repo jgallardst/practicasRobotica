@@ -31,11 +31,12 @@
 #include <innermodel/innermodel.h>
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+#include "TelegramHandler.h"
 
 #include "AprilTags/TagDetector.h"
 #include "AprilTags/Tag36h11.h"
-
-#include "TelegramHandler.h"
 
 class SpecificWorker : public GenericWorker
 {
@@ -53,23 +54,29 @@ public slots:
 private:
 	std::shared_ptr<InnerModel> innerModel;
 	// Tag detection instruments
-	AprilTags::TagDetector* m_tagDetector;
+	::AprilTags::TagDetector* m_tagDetector;
+	::AprilTags::TagCodes m_tagCodes;
 
 	RoboCompGenericBase::TBaseState bState;
 	RoboCompJointMotor::MotorStateMap hState;
 
+	QMap<int, float> tagsSizeMap;
+	double m_tagSize;
+
 	// Video settings
-	const int width = 640;
-	const int height = 480;
+	int m_width;
+	int m_height;
 
 	// Img containers
 	cv::Mat image_gray, image_color;
 
 	// Searching for tags
 	void searchTags(const cv::Mat &image_gray);
+	void print_detection(vector< ::AprilTags::TagDetection> detections);
 
-	// Telegram API Bot
+	// Telegram Sender
 	TelegramHandler sender;
+
 };
 
 #endif

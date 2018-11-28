@@ -21,6 +21,20 @@ endif(OPENMP_FOUND)
 message(STATUS "OPENMP: ${OPENMP_FOUND}")
 
 INCLUDE( $ENV{ROBOCOMP}/cmake/modules/opencv3.cmake )
-SET(CMAKE_CXX_FLAGS " -opencv_core -opencv_highgui ")
-set(CMAKE_CXX_STANDARD 17)
+SET(CMAKE_CXX_FLAGS "-pthread -opencv_core -opencv_highgui ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall")
+
+set(Boost_USE_MULTITHREADED ON)
+
+
+find_package(Threads REQUIRED)
+find_package(OpenSSL REQUIRED)
+find_package(Boost COMPONENTS system REQUIRED)
+find_package(CURL)
+include_directories(/usr/local/include ${OPENSSL_INCLUDE_DIR} ${Boost_INCLUDE_DIR})
+if (CURL_FOUND)
+    include_directories(${CURL_INCLUDE_DIRS})
+    add_definitions(-DHAVE_CURL)
+endif()
+
 
