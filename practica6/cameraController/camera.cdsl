@@ -1,0 +1,11 @@
+import "GetAprilTags.idsl";
+import "AprilTags.idsl";
+import "RGBD.idsl";
+Component camera{
+	Communications{
+		requires RGBD;
+		publishes AprilTags;
+		implements GetAprilTags;
+	};
+	language Cpp;
+};

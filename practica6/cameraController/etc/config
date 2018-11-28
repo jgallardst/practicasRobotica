@@ -1,0 +1,25 @@
+CommonBehavior.Endpoints=tcp -p 11006
+
+
+# Proxies for required interfaces
+LaserProxy = laser:tcp -h localhost -p 10003
+DifferentialRobotProxy = differentialrobot:tcp -h localhost -p 10004
+
+InnerModelPath=/home/jose/robocomp/files/innermodel/simpleworld.xml
+
+# This property is used by the clients to connect to IceStorm.
+TopicManager.Proxy=IceStorm/TopicManager:default -p 9999
+
+# AprilTags
+RGBDProxy= rgbd:tcp -h localhost -p 10096
+GetAprilTags.Endpoints=tcp -p 14310
+AprilTagsProxy = apriltags:tcp -h localhost -p 10261
+
+AprilTagsSize = 350
+ID:0-10 = 350   #tag size
+ID:11-20 = 170   #tag size
+ID:21-30 = 170   #tag size
+
+Ice.Warn.Connections=0
+Ice.Trace.Network=0
+Ice.Trace.Protocol=0
