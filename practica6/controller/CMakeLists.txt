@@ -10,7 +10,9 @@ SET(RC_COMPONENT_INSTALL_PATH "/opt/robocomp" CACHE STRING "component install pa
 #STRING(REPLACE "${COMPONENT_NAME}/" " " COMPONENT_NAME  ${RC_COMPONENT_PATH})
 #STRING(STRIP ${COMPONENT_NAME} COMPONENT_NAME)
 #SET(COMPONENT_NAME ${COMPONENT_NAME} CACHE STRING "component name" FORCE)
-
+find_package(OpenCV REQUIRED)
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+link_libraries(${OpenCV_LIBS})
 SUBDIRS( src )
 
 INSTALL(FILES etc/config DESTINATION ${RC_COMPONENT_INSTALL_PATH}/etc-default/ RENAME controller.conf )

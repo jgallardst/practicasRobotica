@@ -18,6 +18,10 @@ RGBDProxy= rgbd:tcp -h localhost -p 10096
 GetAprilTags.Endpoints=tcp -p 14310
 AprilTagsProxy = apriltags:tcp -h localhost -p 10261
 
+AprilTagsSize = 350
+ID:0-10 = 350   #tag size
+ID:11-20 = 170   #tag size
+ID:21-30 = 170   #tag size
 
 Ice.Warn.Connections=0
 Ice.Trace.Network=0

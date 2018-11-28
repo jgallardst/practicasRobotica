@@ -79,6 +79,22 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
  	differentialrobot_proxy->getBaseState(bState);
 	currentPoint = QVec::vec3(bState.x,0,bState.z);
 	return true;
+
+	// AprilTags
+	m_tagDetector = new AprilTags::TagDetector(AprilTags::tagCodes36h11);
+
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("AprilTagsSize");
+		qDebug() << QString::fromStdString(par.value);
+		Q_ASSERT(par.value > 0);
+		m_tagSize = QString::fromStdString(par.value).toFloat();
+	}
+	catch(std::exception e) { std::cout << e.what() << std::endl;}
+
+	m_fx = innerModel->getNode<InnerModelRGBD>("rgbd")->getFocal();
+	m_fy = innerModel->getNode<InnerModelRGBD>("rgbd")->getFocal();
+
 }
 
 // Gaussian distribution

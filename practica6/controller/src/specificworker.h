@@ -30,6 +30,8 @@
 #include <QGraphicsScene>
 #include "Target.h"
 #include <QGraphicsView>
+#include <AprilTags/TagDetector.h>
+#include <AprilTags/Tag36h11.h>
 #include <QGraphicsEllipseItem>
 #include <iostream>
 #include <fstream>
@@ -94,8 +96,18 @@ class SpecificWorker : public GenericWorker
 		target_t target;
 
 		// AprilTags
+		AprilTags::TagDetector* m_tagDetector;
 		listaMarcas checkMarcas();
-		
+		// Image size
+		int m_width = 640;
+		int m_height = 480;
+		// Focal length
+		double m_fx; // camera focal length in pixels
+		double m_fy;
+		// AprilTags size map
+		double m_tagSize; // April tag side length in meters of square black frame
+		QMap<int, float> tagsSizeMap;
+
 
 };
 
