@@ -61,6 +61,38 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	image_gray.create(m_height,m_width,CV_8UC1);
 	image_color.create(m_height,m_width,CV_8UC3);
 
+	
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("ID:0-10");
+		qDebug() << "ID:0-10" << QString::fromStdString(par.value);
+		Q_ASSERT(par.value > 0);
+		for(int i=0;i<=10; i++)
+			tagsSizeMap.insert( i, QString::fromStdString(par.value).toFloat());
+	}
+	catch(std::exception e) {  qFatal("Error reading config params");}
+
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("ID:11-20");
+		qDebug() << "ID:11-20" << QString::fromStdString(par.value);
+		Q_ASSERT(par.value > 0);
+		for(int i=11;i<=20; i++)
+			tagsSizeMap.insert(i, QString::fromStdString(par.value).toFloat());
+	}
+	catch(std::exception e) { std::cout << e.what() << std::endl;}
+
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("ID:21-100");
+		qDebug() << "ID:21-100" << QString::fromStdString(par.value);
+		Q_ASSERT(par.value > 0);
+		for(int i=21;i<=100; i++)
+			tagsSizeMap.insert(i, QString::fromStdString(par.value).toFloat());
+	}
+	catch(std::exception e) { std::cout << e.what() << std::endl;}
+
+
 	// Default value for IDs not defined before
 	try
 	{
@@ -70,6 +102,7 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 		m_tagSize = QString::fromStdString(par.value).toFloat();
 	}
 	catch(std::exception e) { std::cout << e.what() << std::endl;}
+
 
 	timer.start(10);
 

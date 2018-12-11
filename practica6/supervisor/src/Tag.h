@@ -24,37 +24,31 @@
 
 
 
-#ifndef SPECIFICWORKER_H
-#define SPECIFICWORKER_H
+#ifndef TAG_H
+#define TAG_H
 
-#include <genericworker.h>
-#include <innermodel/innermodel.h>
-#include "Tag.h"
+#include <thread>
+#include <utility>
 
-struct InnerModelTag {
-	int id;
-	int x; 
-	int z;
-}
+class Tag {
+   public:
 
-class SpecificWorker : public GenericWorker
-{
-Q_OBJECT
-public:
-	SpecificWorker(MapPrx& mprx);
-	~SpecificWorker();
-	bool setParams(RoboCompCommonBehavior::ParameterList params);
-
-	void newAprilTagAndPose(const tagsList &tags, const RoboCompGenericBase::TBaseState &bState, const RoboCompJointMotor::MotorStateMap &hState);
-	void newAprilTag(const tagsList &tags);
-
-public slots:
-	void compute();
-
-private:
-	InnerModel *innerModel;
-	Tag currentTag;
-	int currentTagID;
+    void set(RoboCompAprilTags::tag t) {
+        std::lock_guard<std::mutex> l(m);
+        newTag = true;
+        aprilTag = t;
+    }
+    int id() {
+        std::lock_guard<std::mutex> l(m);
+        if(newTag){
+            newTag = false;
+     	    return aprilTag.id;
+        } else return -1;
+    }
+  private:
+    mutable std::mutex m;
+    RoboCompAprilTags::tag aprilTag;
+    bool newTag = false;
 };
 
 #endif

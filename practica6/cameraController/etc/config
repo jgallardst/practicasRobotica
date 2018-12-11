@@ -5,7 +5,7 @@ CommonBehavior.Endpoints=tcp -p 11006
 LaserProxy = laser:tcp -h localhost -p 10003
 DifferentialRobotProxy = differentialrobot:tcp -h localhost -p 10004
 
-InnerModelPath=/home/jose/robocomp/files/innermodel/simpleworld.xml
+InnerModelPath=/home/robocomp/robocomp/files/innermodel/simpleworld.xml
 
 # This property is used by the clients to connect to IceStorm.
 TopicManager.Proxy=IceStorm/TopicManager:default -p 9999

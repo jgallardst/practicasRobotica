@@ -47,8 +47,6 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 //	catch(std::exception e) { qFatal("Error reading config params"); }
 
 
-
-
 	timer.start(Period);
 
 
@@ -57,31 +55,21 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 
 void SpecificWorker::compute()
 {
-	QMutexLocker locker(mutex);
-	//computeCODE
-// 	try
-// 	{
-// 		camera_proxy->getYImage(0,img, cState, bState);
-// 		memcpy(image_gray.data, &img[0], m_width*m_height*sizeof(uchar));
-// 		searchTags(image_gray);
-// 	}
-// 	catch(const Ice::Exception &e)
-// 	{
-// 		std::cout << "Error reading from Camera" << e << std::endl;
-// 	}
+	int tagHolder;
+	if((tagHolder = currentTag.id()) != -1){
+		currentTagID = tagHolder;
+		qDebug() << "Found new tag with ID: " << currentTagID;
+	}
 }
 
 
 void SpecificWorker::newAprilTagAndPose(const tagsList &tags, const RoboCompGenericBase::TBaseState &bState, const RoboCompJointMotor::MotorStateMap &hState)
 {
-//subscribesToCODE
-
 }
 
 void SpecificWorker::newAprilTag(const tagsList &tags)
 {
-//subscribesToCODE
-
+	currentTag.set(tags.front());
 }
 
 

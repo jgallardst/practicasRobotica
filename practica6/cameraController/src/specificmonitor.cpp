@@ -89,6 +89,19 @@ void SpecificMonitor::readConfig(RoboCompCommonBehavior::ParameterList &params )
 	aux.editable = true;
 	configGetString( "","InnerModelPath", aux.value,"nofile");
 	params["InnerModelPath"] = aux;
+
+	aux.editable = false;
+	configGetString("", "ID:0-10", aux.value,"86");
+	params["ID:0-10"] = aux;
+	
+	aux.editable = false;
+	configGetString("", "ID:11-20", aux.value,"86");
+	params["ID:11-20"] = aux;
+
+	aux.editable = false;
+	configGetString("", "ID:21-100", aux.value,"86");
+	params["ID:21-100"] = aux;
+
 }
 
 //comprueba que los parametros sean correctos y los transforma a la estructura del worker

@@ -33,6 +33,7 @@
 #include <JointMotor.h>
 #include <DifferentialRobot.h>
 #include <GenericBase.h>
+#include <GotoPoint.h>
 
 #define CHECK_PERIOD 5000
 #define BASIC_PERIOD 100
@@ -41,6 +42,7 @@ typedef map <string,::IceProxy::Ice::Object*> MapPrx;
 
 using namespace std;
 
+using namespace RoboCompGotoPoint;
 using namespace RoboCompGenericBase;
 using namespace RoboCompDifferentialRobot;
 using namespace RoboCompJointMotor;
@@ -68,6 +70,7 @@ public:
 
 
 	DifferentialRobotPrx differentialrobot_proxy;
+	GotoPointPrx gotopoint_proxy;
 
 	virtual void newAprilTagAndPose(const tagsList &tags, const RoboCompGenericBase::TBaseState &bState, const RoboCompJointMotor::MotorStateMap &hState) = 0;
 	virtual void newAprilTag(const tagsList &tags) = 0;

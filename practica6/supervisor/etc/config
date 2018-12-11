@@ -1,12 +1,13 @@
-CommonBehavior.Endpoints=tcp -p 1
+CommonBehavior.Endpoints=tcp -p 10007
 
 
 # Endpoints for subscriptions
-AprilTagsTopic.Endpoints=tcp -p 0
+AprilTagsTopic.Endpoints=tcp -p 10261
 
 
 # Proxies for required interfaces
 DifferentialRobotProxy = differentialrobot:tcp -h localhost -p 10004
+GotoPointProxy = gotopoint:tcp -h localhost -p 0
 
 
 # This property is used by the clients to connect to IceStorm.
