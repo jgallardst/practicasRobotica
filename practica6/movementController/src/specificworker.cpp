@@ -336,7 +336,7 @@ bool SpecificWorker::atTarget() {
 }
 
 void SpecificWorker::turn(const float speed){
-	differentialrobot_proxy->setSpeedBase(0, 0.4); 
+	differentialrobot_proxy->setSpeedBase(0, speed); 
 }
 
 void SpecificWorker::go(const string &nodo, const float x, const float y, const float alpha){
