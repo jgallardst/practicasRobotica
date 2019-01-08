@@ -7,7 +7,9 @@ AprilTagsTopic.Endpoints=tcp -p 10261
 
 # Proxies for required interfaces
 DifferentialRobotProxy = differentialrobot:tcp -h localhost -p 10004
-GotoPointProxy = gotopoint:tcp -h localhost -p 0
+GotoPointProxy = gotopoint:tcp -h localhost -p 14001
+
+InnerModelPath=/home/robocomp/robocomp/files/innermodel/simpleworld.xml
 
 
 # This property is used by the clients to connect to IceStorm.

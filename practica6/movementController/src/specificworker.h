@@ -46,6 +46,12 @@ class SpecificWorker : public GenericWorker
 		// Ice subscription
 		void setPick(const Pick &myPick);
 
+		// GotoPoint Subscription
+		void stop();
+		void turn(const float speed);
+		bool atTarget();
+		virtual void go(const string &nodo, const float x, const float y, const float alpha);
+		
 	public slots:
 		void compute();
 		void saveToFile();
@@ -54,11 +60,15 @@ class SpecificWorker : public GenericWorker
 	private:
 		std::shared_ptr<InnerModel> innerModel;
 		bool aviso = true;
+		void draw();
+#ifdef graphicInterface
 		QGraphicsScene scene;
 		QGraphicsView view;
-		void draw();
 		QGraphicsRectItem *robot;
 		QGraphicsEllipseItem *noserobot;
+		std::vector<QGraphicsEllipseItem *> greenPath;
+		std::vector<QGraphicsEllipseItem *> redPath;
+#endif
 		// QVec target;
 		std::string fileName = "map.txt";
 		const int tilesize = 70;
@@ -66,8 +76,7 @@ class SpecificWorker : public GenericWorker
 		std::atomic<bool> planReady = false;
 		QVec currentPoint;
 		std::list<QVec> path, bezier;
-		std::vector<QGraphicsEllipseItem *> greenPath;
-		std::vector<QGraphicsEllipseItem *> redPath;
+
 
 		void updateVisitedCells(int x, int z);
 		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);

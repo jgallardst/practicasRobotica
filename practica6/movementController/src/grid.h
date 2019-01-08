@@ -177,11 +177,10 @@ class Grid
 		
 		std::list<QVec> djikstra(const Key &source, const Key &target)
 		{
-
 			if(fmap[target].free == false) {
 				qDebug() << "Picked over an obstacle";
 				return std::list<QVec>();
-			}			
+			}		
 
 			using Elem = std::pair<uint, Key>;
 			std::cout << "Keys " << source << target << " size" << fmap.size() << std::endl;

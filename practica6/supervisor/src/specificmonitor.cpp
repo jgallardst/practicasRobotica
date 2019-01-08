@@ -83,12 +83,15 @@ bool SpecificMonitor::sendParamsToWorker(RoboCompCommonBehavior::ParameterList p
 ///Local Component parameters read at start
 ///Reading parameters from config file or passed in command line, with Ice machinery
 ///We need to supply a list of accepted values to each call
+///Local Component parameters read at start
+///Reading parameters from config file or passed in command line, with Ice machinery
+///We need to supply a list of accepted values to each call
 void SpecificMonitor::readConfig(RoboCompCommonBehavior::ParameterList &params )
 {
-//	RoboCompCommonBehavior::Parameter aux;
-//	aux.editable = true;
-//	configGetString( "","InnerModel", aux.value,"nofile");
-//	params["InnerModel"] = aux;
+	RoboCompCommonBehavior::Parameter aux;
+	aux.editable = true;
+	configGetString( "","InnerModelPath", aux.value,"nofile");
+	params["InnerModelPath"] = aux;
 }
 
 //comprueba que los parametros sean correctos y los transforma a la estructura del worker

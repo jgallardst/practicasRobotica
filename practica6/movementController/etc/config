@@ -7,8 +7,9 @@ DifferentialRobotProxy = differentialrobot:tcp -h localhost -p 10004
 
 # Endpoints for subscriptions
 RCISMousePickerTopic.Endpoints=tcp -p 14000
+GotoPoint.Endpoints=tcp -p 14001
 
-InnerModelPath=/home/robocomp/robocomp/files/innermodel/simpleworld.xml
+InnerModelPath=/home/robocomp/robocomp/files/innermodel/informatica-tercio.xml
 
 # This property is used by the clients to connect to IceStorm.
 TopicManager.Proxy=IceStorm/TopicManager:default -p 9999

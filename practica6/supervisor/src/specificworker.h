@@ -31,12 +31,6 @@
 #include <innermodel/innermodel.h>
 #include "Tag.h"
 
-struct InnerModelTag {
-	int id;
-	int x; 
-	int z;
-}
-
 class SpecificWorker : public GenericWorker
 {
 Q_OBJECT
@@ -52,9 +46,19 @@ public slots:
 	void compute();
 
 private:
-	InnerModel *innerModel;
+	std::shared_ptr<InnerModel> innerModel;
+
+	// Tag related
 	Tag currentTag;
 	int currentTagID;
+
+	// Supervisor
+	enum class supervisorStatus {SEARCH, WAIT};
+	supervisorStatus ss = supervisorStatus::SEARCH;
+	std::list<std::string> targets;
+
+	std::string target;
+	QVec tagCords;
 };
 
 #endif

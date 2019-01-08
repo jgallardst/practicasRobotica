@@ -1,1 +1,1 @@
-rcis $ROBOCOMP/files/innermodel/informatica_plantabaja.xml
+rcis $ROBOCOMP/files/innermodel/informatica-tercio.xml

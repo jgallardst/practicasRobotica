@@ -1,12 +1,14 @@
 import "Laser.idsl";
 import "DifferentialRobot.idsl";
 import "RCISMousePicker.idsl";
+import "GotoPoint.idsl";
 
 Component controller
 {
 	Communications
 	{
 		requires Laser, DifferentialRobot;
+		implements GotoPoint;
 		subscribesTo RCISMousePicker;
 	};
 	language Cpp;

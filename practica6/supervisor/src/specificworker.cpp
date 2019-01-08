@@ -36,20 +36,20 @@ SpecificWorker::~SpecificWorker()
 
 bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 {
-//       THE FOLLOWING IS JUST AN EXAMPLE
-//
-//	try
-//	{
-//		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
-//		innermodel_path = par.value;
-//		innermodel = new InnerModel(innermodel_path);
-//	}
-//	catch(std::exception e) { qFatal("Error reading config params"); }
 
+	try
+	{
+		RoboCompCommonBehavior::Parameter par = params.at("InnerModelPath");
+		innerModel = std::make_shared<InnerModel>(par.value);
+	}
+	catch(std::exception e) { qFatal("Error reading config params"); }
+
+	targets.push_back("target00");
+	targets.push_back("target01");
+	targets.push_back("target02");
+	targets.push_back("target03");
 
 	timer.start(Period);
-
-
 	return true;
 }
 
@@ -60,6 +60,20 @@ void SpecificWorker::compute()
 		currentTagID = tagHolder;
 		qDebug() << "Found new tag with ID: " << currentTagID;
 	}
+	
+	switch(this->ss){
+		case supervisorStatus::SEARCH:
+			// Sacamos el elemento a buscar y reencolamos al final
+			target = targets.front();
+			targets.pop_front(); targets.push_back(target);
+			tagCords = innerModel->transform("world", target.c_str());
+			qDebug() << tagCords;
+			ss = supervisorStatus::WAIT;
+			break;
+		case supervisorStatus::WAIT:
+			break;
+	}
+	
 }
 
 

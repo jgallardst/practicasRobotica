@@ -33,6 +33,7 @@
 #include <DifferentialRobot.h>
 #include <GenericBase.h>
 #include <RCISMousePicker.h>
+#include <GotoPoint.h>
 
 #define CHECK_PERIOD 5000
 #define BASIC_PERIOD 100
@@ -41,6 +42,7 @@ typedef map <string,::IceProxy::Ice::Object*> MapPrx;
 
 using namespace std;
 
+using namespace RoboCompGotoPoint;
 using namespace RoboCompDifferentialRobot;
 using namespace RoboCompGenericBase;
 using namespace RoboCompLaser;
@@ -70,6 +72,10 @@ public:
 	LaserPrx laser_proxy;
 	DifferentialRobotPrx differentialrobot_proxy;
 
+	virtual void go(const string &nodo, const float x, const float y, const float alpha) = 0;
+	virtual void turn(const float speed) = 0;
+	virtual bool atTarget() = 0;
+	virtual void stop() = 0;
 	virtual void setPick(const Pick &myPick) = 0;
 
 protected:

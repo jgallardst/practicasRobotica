@@ -42,17 +42,18 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	catch(std::exception e) { qFatal("Error reading config params"); }
 
 	qDebug() << __FILE__ ;
-	
+
+#ifdef graphicInterface
 	// Scene
-	scene.setSceneRect(-2500, -2500, 5000, 5000);
+	scene.setSceneRect(-7000, -5200, 14000, 11700);
 	view.setScene(&scene);
 	view.scale(1, -1);
 	view.setParent(scrollArea);
 	//view.setViewport(new QGLWidget(QGLFormat(QGL::SampleBuffers)));
 	view.fitInView(scene.sceneRect(), Qt::KeepAspectRatio );
 
-	grid.initialize( TDim{ tilesize, -2500, 2500, -2500, 2500}, TCell{0, true, false, nullptr, 0.} );
-	
+
+
 	for(auto &[key, value] : grid)
 	{
 		auto tile = scene.addRect(-tilesize/2,-tilesize/2, 100,100, QPen(Qt::NoPen));
@@ -68,7 +69,11 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	
 	connect(buttonSave, SIGNAL(clicked()), this, SLOT(saveToFile()));
 	connect(buttonRead, SIGNAL(clicked()), this, SLOT(readFromFile()));
-	
+#endif
+
+	grid.initialize( TDim{ tilesize, -7000, 14000, -5200, 11700}, TCell{0, true, false, nullptr, 0.} );
+
+
 	timer.start();
 	// AutoLoad Map
 	readFromFile();
@@ -135,21 +140,28 @@ void SpecificWorker::compute()
 		RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
 		
 		//draw robot
+#ifdef graphicInterface
 		robot->setPos(bState.x, bState.z);
 		robot->setRotation(-180.*bState.alpha/M_PI);
+#endif
 		
 		//updateVisitedCells(bState.x, bState.z);
-		updateOccupiedCells(bState, ldata);
+		//updateOccupiedCells(bState, ldata);
 
 		if(std::get<0>(t.activoAndGet())){
 				target = std::get<1>(t.activoAndGet());
 				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
+				if(path.size() == 0) return;
+#ifdef graphicInterface
 				for(auto &p: path)
 					redPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::red), QBrush(Qt::red)));
+#endif
 				bezier = this->bezierTransform(path, (int)(1.5*path.size()));
 				if(!bezier.empty()){
+#ifdef graphicInterface
 					for(auto &p: bezier)
 						greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
+#endif
 					currentPoint = bezier.front();
 					bezier.pop_front();
 				}
@@ -186,11 +198,13 @@ void SpecificWorker::compute()
 	}
  	catch(const Ice::Exception &e)
 	{	std::cout  << e << std::endl; }
-	
+
+#ifdef graphicInterface
 	//Resize world widget if necessary, and render the world
 	if (view.size() != scrollArea->size())
 			view.setFixedSize(scrollArea->width(), scrollArea->height());
 	draw();
+# endif
 	
 }
 
@@ -198,6 +212,7 @@ void SpecificWorker::saveToFile()
 {
 	grid.saveToFile(fileName);
 }
+
 
 void SpecificWorker::readFromFile()
 {
@@ -210,22 +225,30 @@ void SpecificWorker::readFromFile()
 		for( auto &[k,v] : grid)
 			delete v.rect;
 		grid.clear();
-		Grid<TCell>::Key key; TCell value;
-		myfile >> key >> value;
+		Grid<TCell>::Key key; 
+		TCell value;
+		int libres= 0;
 		int k=0;
 		while(!myfile.eof()) 
 		{
+			myfile >> key >> value;
+#ifdef graphicInterface
 			auto tile = scene.addRect(-tilesize/2,-tilesize/2, 100,100, QPen(Qt::NoPen));;
 			tile->setPos(key.x,key.z);
 			value.rect = tile;
-			value.id = k++;
+#endif
+			value.id = k;
 			value.cost = 1;
+			if(value.free) 
+				libres++;
 			grid.insert<TCell>(key,value);
-			myfile >> key >> value;
+			k++;
 		}
 		myfile.close();	
+#ifdef graphicInterface
 		robot->setZValue(1);
-		std::cout << grid.size() << " elements read to grid " << fileName << std::endl;
+#endif
+		std::cout << grid.size() << " elements read to grid " << "frees " << libres << " " << fileName << std::endl;
 	}
 	else
 		throw std::runtime_error("Cannot open file");
@@ -259,6 +282,7 @@ void SpecificWorker::updateVisitedCells(int x, int z)
 		float percentOccupacy = 100. * cont / grid.size();
 	}
 }
+#ifdef graphicInterface
 
 void SpecificWorker::draw()
 {
@@ -271,26 +295,62 @@ void SpecificWorker::draw()
 	}
 	view.show();
 }
-
+#endif
 /////////////// PATH PLANNING /////7
 
 
 
 
 /////////////////////////////////////////////////////////77
-/////////
+///////// RCIS
 //////////////////////////////////////////////////////////
 
 void SpecificWorker::setPick(const Pick &myPick)
 {
 	qDebug() << "PRESSED ON: X: " << myPick.x << " Z: " << myPick.z;
   	t.set(myPick.x, myPick.z);
+#ifdef graphicInterface
 	for(auto gp: greenPath)
 		delete gp;
 	greenPath.clear();
 	for(auto gp: redPath)
 		delete gp;
 	redPath.clear();
+#endif
+	path.clear();
+	bezier.clear();
+}
+
+
+/////////////////////////////////////////////////////////77
+///////// GOTOPOINT
+//////////////////////////////////////////////////////////
+
+void SpecificWorker::stop(){
+	differentialrobot_proxy->setSpeedBase(0, 0); 
+}
+
+bool SpecificWorker::atTarget() {
+	auto relative =  (innerModel->transform("base", QVec::vec3(target.x, 0, target.z), "world"));
+	return (relative.norm2() < 100);
+}
+
+void SpecificWorker::turn(const float speed){
+	// ROBOT TURN IS CONTROLLED BY BUG, UNNECESARY
+	return;
+}
+
+void SpecificWorker::go(const string &nodo, const float x, const float y, const float alpha){
+	qDebug() << "TAG AT: X: " << x << " Z: " << y;
+  	t.set(x, y);
+#ifdef graphicInterface
+	for(auto gp: greenPath)
+		delete gp;
+	greenPath.clear();
+	for(auto gp: redPath)
+		delete gp;
+	redPath.clear();
+#endif
 	path.clear();
 	bezier.clear();
 }
