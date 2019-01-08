@@ -68,16 +68,16 @@ void SpecificWorker::compute()
 			targets.pop_front(); targets.push_back(target);
 			tagCords = innerModel->transform("world", target.c_str());
 			qDebug() << "Objetivo en " << tagCords;
-			gotopoint_proxy->go("", tagCords().x(), tagCords.z(), 0);
+			gotopoint_proxy->go("", tagCords.x(), tagCords.z(), 0);
 			ss = supervisorStatus::WAIT;
 			break;
 		case supervisorStatus::WAIT:
 			if( gotopoint_proxy->atTarget() == true){
-				if(currentTag.ID != -1){
+				if(currentTag.id() != -1){
 					qDebug() << "Tag encontrada, vamos a la siguiente!";
-					gotopoint_proxy->stop()
+					gotopoint_proxy->stop();
 					ss = supervisorStatus::SEARCH;
-				} else gotopoint_proxy->turn()
+				} else gotopoint_proxy->turn(0.4);
 			}
 			break;
 	}
