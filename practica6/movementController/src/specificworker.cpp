@@ -336,8 +336,7 @@ bool SpecificWorker::atTarget() {
 }
 
 void SpecificWorker::turn(const float speed){
-	// ROBOT TURN IS CONTROLLED BY BUG, UNNECESARY
-	return;
+	differentialrobot_proxy->setSpeedBase(0, 0.4); 
 }
 
 void SpecificWorker::go(const string &nodo, const float x, const float y, const float alpha){
