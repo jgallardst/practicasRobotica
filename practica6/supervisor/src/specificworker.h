@@ -47,6 +47,7 @@ public slots:
 
 private:
 	std::shared_ptr<InnerModel> innerModel;
+	void fixPosition();
 
 	// Tag related
 	Tag currentTag;
@@ -59,6 +60,7 @@ private:
 
 	std::string target;
 	QVec tagCords;
+	QVec tagAngles;
 };
 
 #endif

@@ -83,13 +83,14 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	RoboCompGenericBase::TBaseState bState;
  	differentialrobot_proxy->getBaseState(bState);
 	currentPoint = QVec::vec3(bState.x,0,bState.z);
+	differentialrobot_proxy->setSpeedBase(0, 0); 
 	return true;
 }
 
 // Gaussian distribution
 static float F2(float x){
 	static const float inv_sqrt_2pi = 0.3989422804014327;
-    float a = (x - 0) / 0.2;
+    float a = (x - 0) / 0.4;
 
     return inv_sqrt_2pi / 0.2 * std::exp(-0.5f * a * a);
 }
@@ -137,7 +138,7 @@ void SpecificWorker::compute()
  	{
  		differentialrobot_proxy->getBaseState(bState);
 		innerModel->updateTransformValues("base", bState.x, 0, bState.z, 0, bState.alpha, 0);
-		RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
+		// RoboCompLaser::TLaserData ldata = laser_proxy->getLaserData();
 		
 		//draw robot
 #ifdef graphicInterface
@@ -150,42 +151,30 @@ void SpecificWorker::compute()
 
 		if(std::get<0>(t.activoAndGet())){
 				target = std::get<1>(t.activoAndGet());
+				onTarget = false;
 				path = grid.getOptimalPath(QVec::vec3(bState.x,0,bState.z), QVec::vec3(target.x,0,target.z));
 				if(path.size() == 0) return;
-#ifdef graphicInterface
-				for(auto &p: path)
-					redPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::red), QBrush(Qt::red)));
-#endif
-				bezier = this->bezierTransform(path, (int)(1.5*path.size()));
+				bezier = path;
 				if(!bezier.empty()){
-#ifdef graphicInterface
-					for(auto &p: bezier)
-						greenPath.push_back(scene.addEllipse(p.x(),p.z(), 100, 100, QPen(Qt::green), QBrush(Qt::green)));
-#endif
 					currentPoint = bezier.front();
 					bezier.pop_front();
 				}
 				t.setInactive();
 		}
-
-		auto relative =  (innerModel->transform("base", QVec::vec3(currentPoint.x(), 0, currentPoint.z()), "world"));
+		relative =  (innerModel->transform("base", QVec::vec3(currentPoint.x(), 0, currentPoint.z()), "world"));
 		float angle = atan2(relative.x(), relative.z());
 		float mod = relative.norm2();
-
-		
 
 		if(mod < 100)
 		{
 			if(bezier.empty())
 			{
-				if(aviso) {
-					aviso = false;
+				if(!onTarget) {
 					qDebug() << "Aligned with target";
+					currentPoint =  QVec::vec3(target.x,0,target.z);
+					onTarget = true;
 				}
-				currentPoint =  QVec::vec3(target.x,0,target.z);
-				differentialrobot_proxy->setSpeedBase(0, 0); 
 			} else {
-				if(!aviso) aviso = true;
 				qDebug() << "Going to Target (X:" << target.x << ", Z:" << target.z << ").";
 				qDebug() << "Route to target length: " << bezier.size();
 				currentPoint = bezier.front();
@@ -193,7 +182,9 @@ void SpecificWorker::compute()
 			}
 		}
 		else {
-			differentialrobot_proxy->setSpeedBase(400 * F1(mod) * F2(angle), angle); 
+			mutex.lock();
+			differentialrobot_proxy->setSpeedBase(500 * F1(mod) * F2(angle), angle); 
+			mutex.unlock();
 		}
 	}
  	catch(const Ice::Exception &e)
@@ -205,7 +196,6 @@ void SpecificWorker::compute()
 			view.setFixedSize(scrollArea->width(), scrollArea->height());
 	draw();
 # endif
-	
 }
 
 void SpecificWorker::saveToFile()
@@ -307,6 +297,7 @@ void SpecificWorker::draw()
 
 void SpecificWorker::setPick(const Pick &myPick)
 {
+/**
 	qDebug() << "PRESSED ON: X: " << myPick.x << " Z: " << myPick.z;
   	t.set(myPick.x, myPick.z);
 #ifdef graphicInterface
@@ -319,6 +310,9 @@ void SpecificWorker::setPick(const Pick &myPick)
 #endif
 	path.clear();
 	bezier.clear();
+	**/
+	qDebug() << " Point and go is disabled on Vigilanti";
+
 }
 
 
@@ -327,29 +321,24 @@ void SpecificWorker::setPick(const Pick &myPick)
 //////////////////////////////////////////////////////////
 
 void SpecificWorker::stop(){
-	differentialrobot_proxy->setSpeedBase(0, 0); 
+	mutex.lock();
+	differentialrobot_proxy->setSpeedBase(0, 0);
+	mutex.unlock();
 }
 
 bool SpecificWorker::atTarget() {
-	auto relative =  (innerModel->transform("base", QVec::vec3(target.x, 0, target.z), "world"));
-	return (relative.norm2() < 100);
+	return onTarget;
 }
 
 void SpecificWorker::turn(const float speed){
+	mutex.lock();
 	differentialrobot_proxy->setSpeedBase(0, speed); 
+	mutex.unlock();
 }
 
 void SpecificWorker::go(const string &nodo, const float x, const float y, const float alpha){
-	qDebug() << "TAG AT: X: " << x << " Z: " << y;
+	qDebug() << "TARGET AT: X: " << x << " Z: " << y;
   	t.set(x, y);
-#ifdef graphicInterface
-	for(auto gp: greenPath)
-		delete gp;
-	greenPath.clear();
-	for(auto gp: redPath)
-		delete gp;
-	redPath.clear();
-#endif
 	path.clear();
 	bezier.clear();
 }

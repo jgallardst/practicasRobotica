@@ -59,15 +59,12 @@ class SpecificWorker : public GenericWorker
 
 	private:
 		std::shared_ptr<InnerModel> innerModel;
-		bool aviso = true;
 		void draw();
 #ifdef graphicInterface
 		QGraphicsScene scene;
 		QGraphicsView view;
 		QGraphicsRectItem *robot;
 		QGraphicsEllipseItem *noserobot;
-		std::vector<QGraphicsEllipseItem *> greenPath;
-		std::vector<QGraphicsEllipseItem *> redPath;
 #endif
 		// QVec target;
 		std::string fileName = "map.txt";
@@ -77,6 +74,10 @@ class SpecificWorker : public GenericWorker
 		QVec currentPoint;
 		std::list<QVec> path, bezier;
 
+		QMutex mutex;
+		QVec relative;
+
+		bool onTarget = false;
 
 		void updateVisitedCells(int x, int z);
 		void updateOccupiedCells(const RoboCompGenericBase::TBaseState &bState, const RoboCompLaser::TLaserData &ldata);

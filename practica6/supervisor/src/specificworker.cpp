@@ -53,9 +53,29 @@ bool SpecificWorker::setParams(RoboCompCommonBehavior::ParameterList params)
 	return true;
 }
 
+void SpecificWorker::fixPosition(){
+	int sCase = ceil(tagAngles.y());
+	switch(sCase){
+		case -1: // -PI/2
+			tagCords = QVec::vec3(tagCords.x() + 800, tagCords.y(), tagCords.z());
+			break;
+		case 0:  // 0
+			tagCords = QVec::vec3(tagCords.x(), tagCords.y(), tagCords.z() - 800);
+			break;
+		case 2:  // PI/2
+			tagCords = QVec::vec3(tagCords.x() - 800, tagCords.y(), tagCords.z());
+			break;
+		case 4:  // PI
+			tagCords = QVec::vec3(tagCords.x(), tagCords.y(), tagCords.z() + 800);
+			break;
+		default: // WEIRD
+			break;
+	}
+}
+
 void SpecificWorker::compute()
 {
-	int tagHolder;
+	int tagHolder = -1;
 	if((tagHolder = currentTag.id()) != -1){
 		currentTagID = tagHolder;
 		qDebug() << "Found new tag with ID: " << currentTagID;
@@ -67,19 +87,27 @@ void SpecificWorker::compute()
 			target = targets.front();
 			targets.pop_front(); targets.push_back(target);
 			tagCords = innerModel->transform("world", target.c_str());
-			qDebug() << "Objetivo en " << tagCords;
+			tagAngles = innerModel->rotationAngles("world", target.c_str());
+			this->fixPosition();
+			qDebug() << "Objetivo en " << tagCords << "(" << ceil(tagAngles.y()) << ")";
 			gotopoint_proxy->go("", tagCords.x(), tagCords.z(), 0);
 			ss = supervisorStatus::WAIT;
+			qDebug() << "Cambiando a Wait";
 			break;
 		case supervisorStatus::WAIT:
 			if( gotopoint_proxy->atTarget() == true){
-				if(currentTag.id() != -1){
+				if(tagHolder != -1){
 					qDebug() << "Tag encontrada, vamos a la siguiente!";
 					gotopoint_proxy->stop();
 					ss = supervisorStatus::SEARCH;
-				} else gotopoint_proxy->turn(0.4);
+					qDebug() << "Cambiando a Search";
+				} else {
+					qDebug() << "Punto objetivo alcanzado";
+					gotopoint_proxy->turn(0.4);
+				}
 			}
 			break;
+			
 	}
 	
 }

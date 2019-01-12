@@ -31,7 +31,7 @@
 #include <iomanip>
 #include <sstream>
 #include <ctime>
-
+#include <chrono>
 
 using namespace TgBot;
 
@@ -39,10 +39,11 @@ class TelegramHandler
 {
 public:
     TelegramHandler();
-    void sendTagFound(int tid, int tHamming, int x, int z);
+    void sendTagFound(int tid, int tHamming, float x, float z);
 private:
     const std::string token = "672516351:AAGyUF0mwSdJTZHuuywvlUJ1DCXC4-Szx2I";
     const int id = 14877845;
+    std::chrono::system_clock::time_point timer = std::chrono::system_clock::now();
 };
 
 #endif

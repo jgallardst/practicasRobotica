@@ -3,7 +3,8 @@
 TelegramHandler::TelegramHandler(){
 }
 
-void TelegramHandler::sendTagFound(int tid, int tHamming, int x, int z){
+void TelegramHandler::sendTagFound(int tid, int tHamming, float x, float z){
+    if(std::chrono::system_clock::now() < timer +  std::chrono::seconds(5)) return;
     Bot bot(token);
 
     // Print date
@@ -15,4 +16,5 @@ void TelegramHandler::sendTagFound(int tid, int tHamming, int x, int z){
     msg << "Found AprilTag with id " << tid << "\n" << "Hamming distance: " << tHamming << "\n"
                 << "Robot location (X:" <<  x << ",Z:" << z << ")" << "\n";
     bot.getApi().sendMessage(id, msg.str());
+    timer = std::chrono::system_clock::now();
 }

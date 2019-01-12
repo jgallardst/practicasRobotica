@@ -119,7 +119,7 @@ void SpecificWorker::compute()
 		memcpy(image_color.data , &colorseq[0], m_height*m_width*3);
 		cv::cvtColor(image_color, image_gray, CV_RGB2GRAY);
 		searchTags(image_gray);
-		usleep(2000000);
+		usleep(200000);
 	}
 	catch(const Ice::Exception &e)
 	{
