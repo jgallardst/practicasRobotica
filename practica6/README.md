@@ -46,5 +46,5 @@ $ ./startSupervisor.sh 'ANOTHER WORKING DIR'
 
 ### More
 
-You can find the entire development paper as https://github.com/jgallardst/practicasRobotica/FinalRoboticsMemories.pdf
+You can find the entire development paper as https://github.com/jgallardst/practicasRobotica/blob/master/FinalRoboticsMemories.pdf
 
